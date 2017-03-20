@@ -39,6 +39,10 @@ func Provider() terraform.ResourceProvider {
 			"phpipam_subnet": resourcePHPIPAMSubnet(),
 		},
 
+		DataSourcesMap: map[string]*schema.Resource{
+			"phpipam_subnet": dataSourcePHPIPAMSubnet(),
+		},
+
 		ConfigureFunc: providerConfigure,
 	}
 }

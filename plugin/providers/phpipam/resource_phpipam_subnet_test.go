@@ -10,9 +10,9 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-const testAccPHPIPAMSubnetName = "phpipam_subnet.subnet"
-const testAccPHPIPAMSubnetCIDR = "10.10.3.0/24"
-const testAccPHPIPAMSubnetConfig = `
+const testAccResourcePHPIPAMSubnetName = "phpipam_subnet.subnet"
+const testAccResourcePHPIPAMSubnetCIDR = "10.10.3.0/24"
+const testAccResourcePHPIPAMSubnetConfig = `
 resource "phpipam_subnet" "subnet" {
 	subnet_address = "10.10.3.0"
 	subnet_mask = 24
@@ -21,16 +21,16 @@ resource "phpipam_subnet" "subnet" {
 }
 `
 
-func TestAccPHPIPAMSubnet(t *testing.T) {
+func TestAccResourcePHPIPAMSubnet(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckPHPIPAMSubnetDeleted,
+		CheckDestroy: testAccCheckResourcePHPIPAMSubnetDeleted,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccPHPIPAMSubnetConfig,
+				Config: testAccResourcePHPIPAMSubnetConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPHPIPAMSubnetCreated,
+					testAccCheckResourcePHPIPAMSubnetCreated,
 					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "subnet_address", "10.10.3.0"),
 					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "subnet_mask", "24"),
 					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "description", "Terraform test subnet"),
@@ -40,10 +40,10 @@ func TestAccPHPIPAMSubnet(t *testing.T) {
 	})
 }
 
-func testAccCheckPHPIPAMSubnetCreated(s *terraform.State) error {
-	r, ok := s.RootModule().Resources[testAccPHPIPAMSubnetName]
+func testAccCheckResourcePHPIPAMSubnetCreated(s *terraform.State) error {
+	r, ok := s.RootModule().Resources[testAccResourcePHPIPAMSubnetName]
 	if !ok {
-		return fmt.Errorf("Resource name %s could not be found", testAccPHPIPAMSubnetName)
+		return fmt.Errorf("Resource name %s could not be found", testAccResourcePHPIPAMSubnetName)
 	}
 	if r.Primary.ID == "" {
 		return errors.New("No ID is set")
@@ -58,9 +58,9 @@ func testAccCheckPHPIPAMSubnetCreated(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckPHPIPAMSubnetDeleted(s *terraform.State) error {
+func testAccCheckResourcePHPIPAMSubnetDeleted(s *terraform.State) error {
 	c := testAccProvider.Meta().(*ProviderPHPIPAMClient).subnetsController
-	_, err := c.GetSubnetsByCIDR(testAccPHPIPAMSubnetCIDR)
+	_, err := c.GetSubnetsByCIDR(testAccResourcePHPIPAMSubnetCIDR)
 	switch {
 	case err == nil:
 		return errors.New("Expected error, got none")
