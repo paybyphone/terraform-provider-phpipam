@@ -19,7 +19,7 @@ func resourcePHPIPAMSubnet() *schema.Resource {
 
 func resourcePHPIPAMSubnetCreate(d *schema.ResourceData, meta interface{}) error {
 	c := meta.(*ProviderPHPIPAMClient).subnetsController
-	in := expandSubnetResource(d)
+	in := expandSubnet(d)
 
 	// Assert the ID field here is empty. If this is not empty the request will fail.
 	in.ID = 0
@@ -33,7 +33,7 @@ func resourcePHPIPAMSubnetCreate(d *schema.ResourceData, meta interface{}) error
 
 func resourcePHPIPAMSubnetUpdate(d *schema.ResourceData, meta interface{}) error {
 	c := meta.(*ProviderPHPIPAMClient).subnetsController
-	in := expandSubnetResource(d)
+	in := expandSubnet(d)
 	// Remove the CIDR fields from the request, as these fields being present
 	// implies that the subnet will be either split or renamed, which is not
 	// supported by UpdateSubnet. These are implemented in the API but not in the
@@ -49,7 +49,7 @@ func resourcePHPIPAMSubnetUpdate(d *schema.ResourceData, meta interface{}) error
 
 func resourcePHPIPAMSubnetDelete(d *schema.ResourceData, meta interface{}) error {
 	c := meta.(*ProviderPHPIPAMClient).subnetsController
-	in := expandSubnetResource(d)
+	in := expandSubnet(d)
 
 	if _, err := c.DeleteSubnet(in.ID); err != nil {
 		return err

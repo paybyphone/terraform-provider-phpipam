@@ -10,7 +10,7 @@ import (
 
 // resourceSubnetOptionalFields represents all the fields that are optional in
 // the phpipam_subnet resource. These fields get flagged as Optional, with zero
-// value defaults (the field is not not set), in addition to being marked as
+// value defaults (the field is not set), in addition to being marked as
 // Computed. Any field not listed here cannot be supplied by the resource and
 // is solely computed.
 var resourceSubnetOptionalFields = linearSearchSlice{
@@ -137,10 +137,10 @@ func resourceSubnetSchema() map[string]*schema.Schema {
 	return schema
 }
 
-// dataSourceSubnetSchema returns the schema for the phpipam_subnet resource.
-// It sets the searchable fields and sets up the attribute conflicts between
-// subnet/mask and subnet ID. It also ensures that all fields are computed as
-// well.
+// dataSourceSubnetSchema returns the schema for the phpipam_subnet data
+// source. It sets the searchable fields and sets up the attribute conflicts
+// between subnet/mask and subnet ID. It also ensures that all fields are
+// computed as well.
 func dataSourceSubnetSchema() map[string]*schema.Schema {
 	schema := bareSubnetSchema()
 	for k, v := range schema {
@@ -163,7 +163,7 @@ func dataSourceSubnetSchema() map[string]*schema.Schema {
 // expandSubnet returns the subnets.Subnet structure for a
 // phpiapm_subnet resource or data source. Depending on if we are dealing with
 // the resource or data source, extra considerations may need to be taken.
-func expandSubnetResource(d *schema.ResourceData) subnets.Subnet {
+func expandSubnet(d *schema.ResourceData) subnets.Subnet {
 	s := subnets.Subnet{
 		ID:             d.Get("subnet_id").(int),
 		SubnetAddress:  d.Get("subnet_address").(string),
