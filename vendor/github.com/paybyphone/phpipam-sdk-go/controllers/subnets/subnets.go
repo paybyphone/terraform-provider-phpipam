@@ -124,6 +124,18 @@ func (c *Controller) GetSubnetsByCIDR(cidr string) (out []Subnet, err error) {
 	return
 }
 
+// GetFirstFreeAddress GETs the first free IP address in a subnet and returns
+// it as a string. This can be used to automatically determine the next address
+// you should use. If there are no more available addresses, the string will be
+// blank.
+//
+// Note that marking a subnet as used does not prevent this function from
+// returning data.
+func (c *Controller) GetFirstFreeAddress(id int) (out string, err error) {
+	err = c.SendRequest("GET", fmt.Sprintf("/subnets/%d/first_free/", id), &struct{}{}, &out)
+	return
+}
+
 // UpdateSubnet updates a subnet by sending a PATCH request.
 //
 // Note you cannot use this function to update a subnet's CIDR - to split,
