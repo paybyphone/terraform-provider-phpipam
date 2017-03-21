@@ -124,7 +124,7 @@ func resourceAddressSchema() map[string]*schema.Schema {
 // between IP address and address ID. It also ensures that all fields are
 // computed as well.
 func dataSourceAddressSchema() map[string]*schema.Schema {
-	schema := bareSubnetSchema()
+	schema := bareAddressSchema()
 	for k, v := range schema {
 		switch {
 		case k == "address_id":

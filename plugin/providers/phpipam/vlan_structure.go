@@ -70,7 +70,7 @@ func resourceVLANSchema() map[string]*schema.Schema {
 // entry ID and VLAN number. It also ensures that all fields are computed as
 // well.
 func dataSourceVLANSchema() map[string]*schema.Schema {
-	schema := bareSubnetSchema()
+	schema := bareVLANSchema()
 	for k, v := range schema {
 		switch {
 		case k == "vlan_id":

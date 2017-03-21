@@ -99,7 +99,7 @@ func resourceSectionSchema() map[string]*schema.Schema {
 // entry ID and Section name. It also ensures that all fields are computed as
 // well.
 func dataSourceSectionSchema() map[string]*schema.Schema {
-	schema := bareSubnetSchema()
+	schema := bareSectionSchema()
 	for k, v := range schema {
 		switch {
 		case k == "section_id":
