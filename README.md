@@ -24,6 +24,9 @@ See the [Plugin Basics][5] page of the Terraform docs to see how to plunk this
 into your config. Check the [releases page][6] of this repo to get releases for
 Linux, OS X, and Windows.
 
+[5]: https://www.terraform.io/docs/plugins/basics.html
+[6]: https://github.com/paybyphone/terraform-provider-phpipam/releases
+
 ## Usage
 
 After installation, to use the plugin, simply use any of its resources or data
@@ -51,7 +54,7 @@ provider "phpipam" {
 
 data "phpipam_subnet" "subnet" {
   subnet_address = "10.10.2.0"
-  mask           = 24
+  subnet_mask    = 24
 }
 
 data "phpipam_first_free_address" "next_address" {
@@ -73,8 +76,341 @@ resource "phpipam_address" {
 }
 ```
 
+### Plugin Options
+
+The options for the plugin are as follows: 
+
+ * `app_id` - The API application ID, configured in the PHPIPAM API panel. This
+   application ID should have read/write access if you are planning to use the
+   resources, but read-only access should be sufficient if you are only using
+   the data sources. Can also be supplied by the `PHPIPAM_APP_ID` environment
+   variable.
+ * `endpoint` - The fully URL to the PHPIPAM API endpoint, such as
+   `https://phpipam.example.com/api`. Can also be supplied by the
+   `PHPIPAM_ENDPOINT_ADDR` environment variable.
+ * `password` - The password to access the PHPIPAM API with. Can also be
+   supplied via `PHPIPAM_PASSWORD` to prevent plain text password storage in
+   config.
+ * `username` - The user name to access the PHPIPAM API with. Can also be
+   supplied via the `PHPIPAM_USER_NAME` variable.
 
 ### Data Sources
+
+The following data sources are supplied by this module:
+
+#### The `phpipam_address` Data Source
+
+The `phpipam_address` data source allows one to get information about a specific
+IP address within PHPIPAM. Use this address to get general information about a
+specific IP address such as its host name, description and more.
+
+Lookups for IP addresses can only happen at this time via its entry in the
+database, or the IP address itself. Future versions of this resource, when such
+features become generally available in the PHPIPAM API, will allow lookup based
+on host name, allowing for better ability for this resource to discover IP
+addresses that have been pre-assigned for a specific resource.
+
+Example:
+
+```
+data "phpipam_address" "address" {
+  ip_address = "10.10.1.1"
+}
+
+output "address_description" {
+  value = "${data.phpipam_address.address.description}"
+}
+```
+
+##### Argument Reference
+
+The resource takes the following parameters:
+
+ * `address_id` - The ID of the IP address in the PHPIPAM database.
+ * `ip_address` - The actual IP address in PHPIPAM.
+
+One of `address_id` or `ip_address` must be provided. If both are supplied,
+`address_id` is used.
+
+##### Attribute Reference
+
+The following attributes are exported. In addition, all arguments are available
+as attributes, and ones that were not supplied are populated.
+
+ * `subnet_id` - The database ID of the subnet this IP address belongs to.
+ * `is_gateway` - `true` if this IP address has been designated as a gateway.
+ * `description` - The description provided to this IP address.
+ * `hostname` - The hostname supplied to this IP address.
+ * `owner` - The owner name provided to this IP address.
+ * `mac_address` - The MAC address provided to this IP address.
+ * `state_tag_id` - The tag ID in the database for the IP address' specific
+   state. **NOTE:** This is currently represented as an integer but may change
+   to the specific string representation at a later time.
+ * `skip_ptr_record` - `true` if PTR records are not being created for this IP
+   address.
+ * `ptr_record_id` - The ID of the associated PTR record in the PHPIPAM
+   database.
+ * `device_id` - The ID of the associated device in the PHPIPAM database.
+ * `switch_port_label` - A string port label that is associated with this
+   address.
+ * `note` - The note supplied to this IP address.
+ * `last_seen` - The last time this IP address answered ping probes.
+ * `exclude_ping` - `true` if this address is excluded from ping probes.
+ * `edit_date` - The last time this resource was modified.
+
+##### The `phpipam_first_free_address` Data Source
+
+The `phpipam_first_free_address` data source allows you to get the next
+available IP address in a specific subnet in PHPIPAM. Using this resource allows
+you to automatically allocate an IP address that can be used as an IP address in
+resources such as `vsphere_virtual_machine`, or other virtual machine-like
+resources that require static IP addresses.
+
+Note that not having any addresses available will cause the Terraform run to
+fail. Conversely, marking a subnet as unavailable or used will not prevent this
+data source from returning an IP address, so be aware of this while using this
+resource.
+
+Example:
+
+```
+// Look up the subnet
+data "phpipam_subnet" "subnet" {
+  subnet_address = "10.10.2.0"
+  subnet_mask    = 24
+}
+
+// Get the first available address
+data "phpipam_first_free_address" "next_address" {
+  subnet_id = "${data.phpipam_subnet.subnet.subnet_id}"
+}
+
+// Reserve the address. Note that we use ignore_changes here to ensure that we
+// don't end up re-allocating this address on future Terraform runs.
+resource "phpipam_address" {
+  subnet_id   = "${data.phpipam_subnet.subnet.subnet_id}"
+  ip_address  = "${data.phpipam_first_free_address.next_address.ip_address}"
+  hostname    = "tf-test-host.example.internal"
+  description = "Managed by Terraform"
+
+  lifecycle {
+    ignore_changes = [
+      "subnet_id",
+      "ip_address",
+    ]
+  }
+}
+
+// Supply the IP address to an instance. Note that we are also ignoring
+// network_interface here to ensure the IP address does not get re-calculated.
+resource "vsphere_virtual_machine" "web" {
+  name   = "terraform-web"
+  vcpu   = 2
+  memory = 4096
+
+  network_interface {
+    label        = "VM Network"
+    ipv4_address = "${data.phpipam_first_free_address.next_address.ip_address}"
+  }
+
+  disk {
+    template = "centos-7"
+  }
+
+  ignore_changes = [
+    "network_interface",
+  ]
+}
+```
+
+##### Argument Reference
+
+The resource takes the following parameters:
+
+ * `subnet_id` - The ID of the subnet to look up the address in.
+
+##### Attribute Reference
+
+The following attributes are exported:
+
+ * `ip_address` - The next available IP address.
+
+#### The `phpipam_section` Data Source
+
+The `phpipam_section` data source allows one to look up a specific section,
+either by database ID or name. This data can then be used to manage other parts
+of PHPIPAM, such as in the event that the section name is known but not its ID,
+which is required for managing subnets.
+
+Example:
+
+```
+data "phpipam_section" "section" {
+  name = "Customers"
+}
+
+resource "phpipam_subnet" "subnet" {
+  section_id = "${data.phpipam_section.section.section_id}"
+  subnet_address = "10.10.3.0"
+  subnet_mask = 24
+}
+```
+
+##### Argument Reference
+
+The resource takes the following parameters:
+
+ * `section_id` - The ID of the section to look up.
+ * `name` - The name of the section to look up.
+
+One of `section_id` or `name` must be supplied. If both are supplied,
+`section_id` is used.
+
+##### Attribute Reference
+
+The following attributes are exported. In addition, all arguments are available
+as attributes, and ones that were not supplied are populated.
+
+ * `section_id` - The ID of the section in the PHPIPAM database.
+ * `name` - The name of the section.
+ * `description` - The section's description.
+ * `master_section_id` - The ID of the parent section in the PHPIPAM database.
+ * `permissions` - A JSON representation of permissions for this section.
+ * `strict_mode` - `true` if this subnet is set up to check that IP addresses
+   are valid for the subnets they are in.
+ * `subnet_ordering` - How subnets in this section are ordered.
+ * `display_order` - The section's display order number.
+ * `edit_date` - The date this resource was last edited.
+ * `show_vlan_in_subnet_listing` - `true` if VLANs are being shown in the subnet
+   listing for this section.
+ * `show_vrf_in_subnet_listing` - `true` if VRFs are being shown in the subnet
+   listing for this section.
+ * `show_supernet_only` - `true` if supernets are only being shown in the subnet
+   listing.
+ * `dns_resolver_id` - The ID of the DNS resolver to use in the section.
+
+#### The `phpipam_subnet` Data Source
+
+The `phpipam_subnet` data source gets information on a subnet such as its ID
+(required for creating addresses), description, and more.
+
+Example:
+
+```
+// Look up the subnet
+data "phpipam_subnet" "subnet" {
+  subnet_address = "10.10.2.0"
+  subnet_mask    = 24
+}
+
+// Reserve the address.
+resource "phpipam_address" {
+  subnet_id   = "${data.phpipam_subnet.subnet.subnet_id}"
+  ip_address  = "10.10.2.10"
+  hostname    = "tf-test-host.example.internal"
+  description = "Managed by Terraform"
+}
+```
+
+##### Argument Reference
+
+The resource takes the following parameters:
+
+ * `subnet_id` - The ID of the subnet to look up.
+ * `subnet_address` - The network address of the subnet to look up.
+ * `subnet_mask` - The subnet mask, in bits, of the subnet to look up.
+
+Either `subnet_id`, or `subnet_address` and `subnet_mask` must be supplied. If
+all three values are supplied, the data source will use `subnet_id`.
+
+##### Attribute Reference
+
+The following attributes are exported. In addition, all arguments are available
+as attributes, and ones that were not supplied are populated.
+
+ * `subnet_id` - The ID of the subnet in the PHPIPAM database.
+ * `subnet_address` - The network address of the subnet.
+ * `subnet_mask` - The subnet mask, in bits.
+ * `description` - The description set for the subnet.
+ * `section_id` - The ID of the section for this address in the PHPIPAM
+   database.
+ * `linked_subnet_id` - The ID of the linked subnet in the PHPIPAM database.
+ * `vlan_id` - The ID of the VLAN for this subnet in the PHPIPAM database.
+ * `vrf_id` - The ID of the VRF for this subnet in the PHPIPAM database.
+ * `master_subnet_id` - The ID of the parent subnet for this subnet in the
+   PHPIPAM database.
+ * `nameserver_id` - The ID of the nameserver used to assign PTR records for
+   this subnet.
+ * `show_name` - `true` if the subnet name is are shown in the section, instead
+   of the network address.
+ * `permissions` - A JSON representation of the permissions associated with this
+   subnet.
+ * `create_ptr_records` - `true` if PTR records are created for addresses in
+   this subnet.
+ * `display_hostnames` - `true` if hostnames are displayed instead of IP
+   addresses in the address listing for this subnet.
+ * `allow_ip_requests` - `true` if the subnet allows IP requests in PHPIPAM.
+ * `scan_agent_id` - The ID of the ping scan agent that is used for this subnet.
+ * `include_in_ping` - `true` if this subnet is included in ping probes.
+ * `host_discovery_enabled` - `true` if this subnet is included in new host
+   scans.
+ * `is_folder` - `true` if this subnet is a folder and not an actual subnet.
+ * `is_full` - `true` if the subnet has been marked as full.
+ * `state_tag_id` - The ID of the state tag for this subnet. This may become an
+   actual string representation of this at a later time (example: `Used`).
+ * `utilization_threshold` - The subnet's utilization threshold.
+ * `location_id` - The ID of the location for this subnet.
+ * `edit_date` - The date this resource was last updated.
+
+#### The `phpipam_vlan` Data Source
+
+The `phpipam_vlan` data source allows one to look up a VLAN in the PHPIPAM
+database. This can then be used to assign a VLAN to a subnet in the
+`phpipam_subnet` resource. It can also be used to gather other information on
+the VLAN.
+
+Example:
+
+```
+data "phpipam_section" "section" {
+  name = "Customers"
+}
+
+data "phpipam_vlan" "vlan" {
+  number = 1000
+}
+
+resource "phpipam_subnet" "subnet" {
+  section_id     = "${data.phpipam_section.section.section_id}"
+  subnet_address = "10.10.3.0"
+  subnet_mask    = 24
+  vlan_id        = "${data.phpipam_vlan.vlan.vlan_id}"
+}
+```
+
+##### Argument Reference
+
+The resource takes the following parameters:
+
+ * `vlan_id` - The ID of the VLAN to look up. **NOTE:** this is the database ID,
+   not the VLAN number - if you need this, use the `number` parameter.
+ * `number` - The number of the VLAN to look up.
+
+One of `vlan_id` or `number` must be supplied. If both are supplied,
+`vlan_id` is used.
+
+##### Attribute Reference
+
+The following attributes are exported. In addition, all arguments are available
+as attributes, and ones that were not supplied are populated.
+
+ * `vlan_id` - The ID of the VLAN to look up. **NOTE:** this is the database ID,
+   not the VLAN number - if you need this, use the `number` parameter.
+ * `number` - The number of the VLAN (the actual VLAN ID on your switch).
+ * `l2_domain_id` - The layer 2 domain ID in the PHPIPAM database.
+ * `name` - The name/label of the VLAN.
+ * `description` - The description supplied to the VLAN.
+ * `edit_date` - The date this resource was last updated.
 
 ### Resources
 
