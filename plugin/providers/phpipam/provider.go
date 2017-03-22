@@ -43,10 +43,11 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"phpipam_address": dataSourcePHPIPAMAddress(),
-			"phpipam_section": dataSourcePHPIPAMSection(),
-			"phpipam_subnet":  dataSourcePHPIPAMSubnet(),
-			"phpipam_vlan":    dataSourcePHPIPAMVLAN(),
+			"phpipam_address":            dataSourcePHPIPAMAddress(),
+			"phpipam_first_free_address": dataSourcePHPIPAMFirstFreeAddress(),
+			"phpipam_section":            dataSourcePHPIPAMSection(),
+			"phpipam_subnet":             dataSourcePHPIPAMSubnet(),
+			"phpipam_vlan":               dataSourcePHPIPAMVLAN(),
 		},
 
 		ConfigureFunc: providerConfigure,
