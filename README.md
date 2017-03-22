@@ -85,7 +85,7 @@ The options for the plugin are as follows:
    resources, but read-only access should be sufficient if you are only using
    the data sources. Can also be supplied by the `PHPIPAM_APP_ID` environment
    variable.
- * `endpoint` - The fully URL to the PHPIPAM API endpoint, such as
+ * `endpoint` - The full URL to the PHPIPAM API endpoint, such as
    `https://phpipam.example.com/api`. Can also be supplied by the
    `PHPIPAM_ENDPOINT_ADDR` environment variable.
  * `password` - The password to access the PHPIPAM API with. Can also be
