@@ -28,7 +28,6 @@ var resourceSubnetOptionalFields = linearSearchSlice{
 	"include_in_ping",
 	"host_discover_enabled",
 	"is_full",
-	"state_tag_id",
 	"utilization_threshold",
 }
 
@@ -97,9 +96,6 @@ func bareSubnetSchema() map[string]*schema.Schema {
 		},
 		"is_full": &schema.Schema{
 			Type: schema.TypeBool,
-		},
-		"state_tag_id": &schema.Schema{
-			Type: schema.TypeInt,
 		},
 		"utilization_threshold": &schema.Schema{
 			Type: schema.TypeInt,
@@ -177,7 +173,7 @@ func expandSubnet(d *schema.ResourceData) subnets.Subnet {
 	s := subnets.Subnet{
 		ID:             d.Get("subnet_id").(int),
 		SubnetAddress:  d.Get("subnet_address").(string),
-		Mask:           d.Get("subnet_mask").(int),
+		Mask:           phpipam.JSONIntString(d.Get("subnet_mask").(int)),
 		Description:    d.Get("description").(string),
 		SectionID:      d.Get("section_id").(int),
 		LinkedSubnet:   d.Get("linked_subnet_id").(int),
@@ -195,7 +191,6 @@ func expandSubnet(d *schema.ResourceData) subnets.Subnet {
 		DiscoverSubnet: phpipam.BoolIntString(d.Get("host_discovery_enabled").(bool)),
 		IsFolder:       phpipam.BoolIntString(d.Get("is_folder").(bool)),
 		IsFull:         phpipam.BoolIntString(d.Get("is_full").(bool)),
-		State:          d.Get("state_tag_id").(int),
 		Threshold:      d.Get("utilization_threshold").(int),
 		Location:       d.Get("location_id").(int),
 		EditDate:       d.Get("edit_date").(string),
@@ -228,7 +223,6 @@ func flattenSubnet(s subnets.Subnet, d *schema.ResourceData) {
 	d.Set("host_discovery_enabled", s.DiscoverSubnet)
 	d.Set("is_folder", s.IsFolder)
 	d.Set("is_full", s.IsFull)
-	d.Set("state_tag_id", s.State)
 	d.Set("utilization_threshold", s.Threshold)
 	d.Set("location_id", s.Location)
 	d.Set("edit_date", s.EditDate)
