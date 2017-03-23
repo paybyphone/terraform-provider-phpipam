@@ -160,6 +160,16 @@ func dataSourceSubnetSchema() map[string]*schema.Schema {
 	return schema
 }
 
+// dataSourceSubnetsSchema returns the sub-schema for the phpipam_subnets data
+// source. All this function does is set all fields as computed.
+func dataSourceSubnetsSchema() map[string]*schema.Schema {
+	schema := bareSubnetSchema()
+	for _, v := range schema {
+		v.Computed = true
+	}
+	return schema
+}
+
 // expandSubnet returns the subnets.Subnet structure for a
 // phpiapm_subnet resource or data source. Depending on if we are dealing with
 // the resource or data source, extra considerations may need to be taken.
