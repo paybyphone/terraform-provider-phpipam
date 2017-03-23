@@ -1,6 +1,10 @@
 package phpipam
 
-import "github.com/hashicorp/terraform/helper/schema"
+import (
+	"strconv"
+
+	"github.com/hashicorp/terraform/helper/schema"
+)
 
 func dataSourcePHPIPAMSubnets() *schema.Resource {
 	return &schema.Resource{
@@ -22,5 +26,22 @@ func dataSourcePHPIPAMSubnets() *schema.Resource {
 }
 
 func dataSourcePHPIPAMSubnetsRead(d *schema.ResourceData, meta interface{}) error {
+	c := meta.(*ProviderPHPIPAMClient).sectionsController
+	out, err := c.GetSubnetsInSection(d.Get("section_id").(int))
+	if err != nil {
+		return err
+	}
+
+	d.SetId(strconv.Itoa(d.Get("section_id").(int)))
+
+	var results []map[string]interface{}
+	for _, v := range out {
+		results = append(results, flattenSubnetToMap(v))
+	}
+	err = d.Set("subnets", results)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

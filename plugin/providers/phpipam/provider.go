@@ -47,6 +47,7 @@ func Provider() terraform.ResourceProvider {
 			"phpipam_first_free_address": dataSourcePHPIPAMFirstFreeAddress(),
 			"phpipam_section":            dataSourcePHPIPAMSection(),
 			"phpipam_subnet":             dataSourcePHPIPAMSubnet(),
+			"phpipam_subnets":            dataSourcePHPIPAMSubnets(),
 			"phpipam_vlan":               dataSourcePHPIPAMVLAN(),
 		},
 

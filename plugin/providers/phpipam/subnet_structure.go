@@ -227,3 +227,34 @@ func flattenSubnet(s subnets.Subnet, d *schema.ResourceData) {
 	d.Set("location_id", s.Location)
 	d.Set("edit_date", s.EditDate)
 }
+
+// flattenSubnetToMap converts a subnets.Subnet into a map[string]interface{}.
+func flattenSubnetToMap(s subnets.Subnet) map[string]interface{} {
+	m := make(map[string]interface{})
+
+	m["subnet_id"] = s.ID
+	m["subnet_address"] = s.SubnetAddress
+	m["subnet_mask"] = s.Mask
+	m["description"] = s.Description
+	m["section_id"] = s.SectionID
+	m["linked_subnet_id"] = s.LinkedSubnet
+	m["vlan_id"] = s.VLANID
+	m["vrf_id"] = s.VRFID
+	m["master_subnet_id"] = s.MasterSubnetID
+	m["nameserver_id"] = s.NameserverID
+	m["show_name"] = s.ShowName
+	m["permissions"] = s.Permissions
+	m["create_ptr_records"] = s.DNSRecursive
+	m["display_hostnames"] = s.DNSRecords
+	m["allow_ip_requests"] = s.AllowRequests
+	m["scan_agent_id"] = s.ScanAgent
+	m["include_in_ping"] = s.PingSubnet
+	m["host_discovery_enabled"] = s.DiscoverSubnet
+	m["is_folder"] = s.IsFolder
+	m["is_full"] = s.IsFull
+	m["utilization_threshold"] = s.Threshold
+	m["location_id"] = s.Location
+	m["edit_date"] = s.EditDate
+
+	return m
+}
