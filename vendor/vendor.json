@@ -494,50 +494,50 @@
 		{
 			"checksumSHA1": "lOZ+LVf728WfTr1l+QxPztpA+Q0=",
 			"path": "github.com/paybyphone/phpipam-sdk-go/controllers/addresses",
-			"revision": "62c11fbf648c2ebff2f79f90f62d7c93e7af0668",
-			"revisionTime": "2017-03-21T22:23:23Z"
+			"revision": "489df44901db9a58f9b39f37d1d3e4e5232498f3",
+			"revisionTime": "2017-03-23T18:01:12Z"
 		},
 		{
-			"checksumSHA1": "Ip0XEi9GtF7WqlOI6/gEIZWhBEY=",
+			"checksumSHA1": "8DoCZFEF8xaZrDJEfdhWqu42hf0=",
 			"path": "github.com/paybyphone/phpipam-sdk-go/controllers/sections",
-			"revision": "62c11fbf648c2ebff2f79f90f62d7c93e7af0668",
-			"revisionTime": "2017-03-21T22:23:23Z"
+			"revision": "489df44901db9a58f9b39f37d1d3e4e5232498f3",
+			"revisionTime": "2017-03-23T18:01:12Z"
 		},
 		{
-			"checksumSHA1": "q0TJoh3if4mL1//Ju6qF2mvswSE=",
+			"checksumSHA1": "8EDty6JyKfQ4q9RYvHezvPXQehM=",
 			"path": "github.com/paybyphone/phpipam-sdk-go/controllers/subnets",
-			"revision": "62c11fbf648c2ebff2f79f90f62d7c93e7af0668",
-			"revisionTime": "2017-03-21T22:23:23Z"
+			"revision": "489df44901db9a58f9b39f37d1d3e4e5232498f3",
+			"revisionTime": "2017-03-23T18:01:12Z"
 		},
 		{
 			"checksumSHA1": "VeUtF8J2w1Gnwr6FdB1+EaSMu84=",
 			"path": "github.com/paybyphone/phpipam-sdk-go/controllers/vlans",
-			"revision": "62c11fbf648c2ebff2f79f90f62d7c93e7af0668",
-			"revisionTime": "2017-03-21T22:23:23Z"
+			"revision": "489df44901db9a58f9b39f37d1d3e4e5232498f3",
+			"revisionTime": "2017-03-23T18:01:12Z"
 		},
 		{
-			"checksumSHA1": "MKh3oRSwP+Zv2KrtaPpMSRD4qNA=",
+			"checksumSHA1": "1NGDMqCaySijyiiGPnSX77h0Ruo=",
 			"path": "github.com/paybyphone/phpipam-sdk-go/phpipam",
-			"revision": "62c11fbf648c2ebff2f79f90f62d7c93e7af0668",
-			"revisionTime": "2017-03-21T22:23:23Z"
+			"revision": "489df44901db9a58f9b39f37d1d3e4e5232498f3",
+			"revisionTime": "2017-03-23T18:01:12Z"
 		},
 		{
 			"checksumSHA1": "/Nu1RXXPsalF69UPOuFm5Q8fURI=",
 			"path": "github.com/paybyphone/phpipam-sdk-go/phpipam/client",
-			"revision": "62c11fbf648c2ebff2f79f90f62d7c93e7af0668",
-			"revisionTime": "2017-03-21T22:23:23Z"
+			"revision": "489df44901db9a58f9b39f37d1d3e4e5232498f3",
+			"revisionTime": "2017-03-23T18:01:12Z"
 		},
 		{
 			"checksumSHA1": "SjmycWTgtT0Rit7DDNy8Sl/SShA=",
 			"path": "github.com/paybyphone/phpipam-sdk-go/phpipam/request",
-			"revision": "62c11fbf648c2ebff2f79f90f62d7c93e7af0668",
-			"revisionTime": "2017-03-21T22:23:23Z"
+			"revision": "489df44901db9a58f9b39f37d1d3e4e5232498f3",
+			"revisionTime": "2017-03-23T18:01:12Z"
 		},
 		{
 			"checksumSHA1": "R1/J0Xef+KZNQTFfaUb4EOuUD6E=",
 			"path": "github.com/paybyphone/phpipam-sdk-go/phpipam/session",
-			"revision": "62c11fbf648c2ebff2f79f90f62d7c93e7af0668",
-			"revisionTime": "2017-03-21T22:23:23Z"
+			"revision": "489df44901db9a58f9b39f37d1d3e4e5232498f3",
+			"revisionTime": "2017-03-23T18:01:12Z"
 		},
 		{
 			"checksumSHA1": "zmC8/3V4ls53DJlNTKDZwPSC/dA=",

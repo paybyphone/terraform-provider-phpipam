@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -111,6 +112,37 @@ func (bis *BoolIntString) UnmarshalJSON(b []byte) error {
 			Value: "bool",
 			Type:  reflect.ValueOf(s).Type(),
 		}
+	}
+
+	return nil
+}
+
+// JSONIntString is a type for representing an IntString JSON value, but with
+// "" also representing a zero value.
+type JSONIntString int
+
+// MarshalJSON implements json.Marshaler for the JSONIntString type.
+func (jis JSONIntString) MarshalJSON() ([]byte, error) {
+	return json.Marshal(strconv.Itoa(int(jis)))
+}
+
+// UnmarshalJSON implements json.Unmarshaler for the JSONIntString type.
+func (jis *JSONIntString) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	if s == "" {
+		*jis = 0
+	} else {
+		i, err := strconv.Atoi(s)
+		if err != nil {
+			return &json.UnmarshalTypeError{
+				Value: "int",
+				Type:  reflect.ValueOf(s).Type(),
+			}
+		}
+		*jis = JSONIntString(i)
 	}
 
 	return nil

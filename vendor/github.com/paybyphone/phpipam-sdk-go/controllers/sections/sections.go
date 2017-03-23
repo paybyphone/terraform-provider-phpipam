@@ -5,6 +5,7 @@ package sections
 import (
 	"fmt"
 
+	"github.com/paybyphone/phpipam-sdk-go/controllers/subnets"
 	"github.com/paybyphone/phpipam-sdk-go/phpipam"
 	"github.com/paybyphone/phpipam-sdk-go/phpipam/client"
 	"github.com/paybyphone/phpipam-sdk-go/phpipam/session"
@@ -89,6 +90,12 @@ func (c *Controller) GetSectionByID(id int) (out Section, err error) {
 // GetSectionByName GETs a section via its name.
 func (c *Controller) GetSectionByName(name string) (out Section, err error) {
 	err = c.SendRequest("GET", fmt.Sprintf("/sections/%s/", name), &struct{}{}, &out)
+	return
+}
+
+// GetSubnetsInSection GETs the subnets in a section by section ID.
+func (c *Controller) GetSubnetsInSection(id int) (out []subnets.Subnet, err error) {
+	err = c.SendRequest("GET", fmt.Sprintf("/sections/%d/subnets/", id), &struct{}{}, &out)
 	return
 }
 
