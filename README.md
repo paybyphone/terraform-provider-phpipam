@@ -333,6 +333,11 @@ Arguments are processed in the following order of precedence:
  * `subnet_address` and `subnet_mask`
  * `section_id`, and either one of `description` or `description_match`
 
+**NOTE:** On a description search, in the event of multiple results, only the
+first match is returned. The resource fails if it somehow finds multiple results
+on a CIDR (subnet and mask) search - this is to assert that you are getting the
+subnet you requested.
+
 ##### Attribute Reference
 
 The following attributes are exported. In addition, all arguments are available
