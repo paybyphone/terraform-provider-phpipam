@@ -8,11 +8,21 @@ import (
 
 const testAccDataSourcePHPIPAMAddressConfig = `
 data "phpipam_address" "address_by_address" {
-	ip_address = "10.10.1.245"
+  ip_address = "10.10.1.245"
 }
 
 data "phpipam_address" "address_by_id" {
-	address_id = "${data.phpipam_address.address_by_address.address_id}"
+  address_id = "${data.phpipam_address.address_by_address.address_id}"
+}
+
+data "phpipam_address" "address_by_hostname" {
+  subnet_id = 3
+  hostname  = "server1.cust1.local"
+}
+
+data "phpipam_address" "address_by_description" {
+  subnet_id   = 3
+  description = "Server2"
 }
 `
 
@@ -27,6 +37,8 @@ func TestAccDataSourcePHPIPAMAddress(t *testing.T) {
 					resource.TestCheckResourceAttrPair("data.phpipam_address.address_by_address", "address_id", "data.phpipam_address.address_by_id", "address_id"),
 					resource.TestCheckResourceAttrPair("data.phpipam_address.address_by_address", "ip_address", "data.phpipam_address.address_by_id", "ip_address"),
 					resource.TestCheckResourceAttr("data.phpipam_address.address_by_address", "description", "Gateway"),
+					resource.TestCheckResourceAttr("data.phpipam_address.address_by_hostname", "ip_address", "10.10.1.3"),
+					resource.TestCheckResourceAttr("data.phpipam_address.address_by_description", "ip_address", "10.10.1.4"),
 				),
 			},
 		},

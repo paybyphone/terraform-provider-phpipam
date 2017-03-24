@@ -128,15 +128,41 @@ The data source takes the following parameters:
 
  * `address_id` - The ID of the IP address in the PHPIPAM database.
  * `ip_address` - The actual IP address in PHPIPAM.
+ * `subnet_id` - The ID of the subnet that the address resides in. This is
+   required to search on the `description` or `hostname` fields.
+ * `description` - The description of the IP address. `subnet_id` is required
+   when using this field.
+ * `hostname` - The host name of the IP address. `subnet_id` is required when
+   using this field.
 
-One of `address_id` or `ip_address` must be provided. If both are supplied,
-`address_id` is used.
+⚠️  **NOTE:** While the `phpipam_subnet` field has a `description_match` field, the
+address data source does not. The intention of `description_match` in
+`phpipam_subnet` is to supply an ad-hoc tagging system where a subnet can be
+assigned to multiple projects at once, which can then be searched on with this
+field. This is in lieu of a custom field scheme that would support such a
+system. Custom fields are not implemented in `phpipam-sdk-go`, and hence are not
+implemented in this plugin - if there is enough demand for it and/or need
+necessitates, this may change.
+
+⚠️  **NOTE:** `description` and `hostname` fields return the first match found
+without any warnings. If you have multiple addresses assigned to a single host
+and need to search on it, enter a unique value in the description and search on
+that. IP address searches return errors on multiple results to assert that you
+are getting the specific address you are looking for.
+
+Arguments are processed in the following order of precedence:
+
+ * `address_id`
+ * `ip_address`
+ * `subnet_id`, and either one of `description` or `hostname`
 
 ##### Attribute Reference
 
 The following attributes are exported. In addition, all arguments are available
 as attributes, and ones that were not supplied are populated.
 
+ * `address_id` - The ID of the IP address in the PHPIPAM database.
+ * `ip_address` - the IP address.
  * `subnet_id` - The database ID of the subnet this IP address belongs to.
  * `is_gateway` - `true` if this IP address has been designated as a gateway.
  * `description` - The description provided to this IP address.
@@ -326,17 +352,16 @@ The data source takes the following parameters:
  * `description_match` - A regular expression to match against when searching
    for a subnet. `section_id` is required if you want to use this option.
 
+⚠️  **NOTE:** Searches with the `description` or `description_match` fields
+return the first match found without any warnings. Conversely, the resource
+fails if it somehow finds multiple results on a CIDR (subnet and mask) search -
+this is to assert that you are getting the subnet you requested.
 
 Arguments are processed in the following order of precedence:
 
  * `subnet_id`
  * `subnet_address` and `subnet_mask`
  * `section_id`, and either one of `description` or `description_match`
-
-**NOTE:** On a description search, in the event of multiple results, only the
-first match is returned. The resource fails if it somehow finds multiple results
-on a CIDR (subnet and mask) search - this is to assert that you are getting the
-subnet you requested.
 
 ##### Attribute Reference
 

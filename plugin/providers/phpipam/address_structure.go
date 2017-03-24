@@ -124,22 +124,34 @@ func resourceAddressSchema() map[string]*schema.Schema {
 // between IP address and address ID. It also ensures that all fields are
 // computed as well.
 func dataSourceAddressSchema() map[string]*schema.Schema {
-	schema := bareAddressSchema()
-	for k, v := range schema {
+	s := bareAddressSchema()
+	for k, v := range s {
 		switch {
 		case k == "address_id":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"ip_address"}
+			v.ConflictsWith = []string{"ip_address", "subnet_id", "description", "hostname"}
 		case k == "ip_address":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"address_id"}
+			v.ConflictsWith = []string{"address_id", "subnet_id", "description", "hostname"}
+		case k == "subnet_id":
+			v.Optional = true
+			v.Computed = true
+			v.ConflictsWith = []string{"ip_address", "address_id"}
+		case k == "description":
+			v.Optional = true
+			v.Computed = true
+			v.ConflictsWith = []string{"ip_address", "address_id", "hostname"}
+		case k == "hostname":
+			v.Optional = true
+			v.Computed = true
+			v.ConflictsWith = []string{"ip_address", "address_id", "description"}
 		default:
 			v.Computed = true
 		}
 	}
-	return schema
+	return s
 }
 
 // expandAddress returns the addresses.Address structure for a
