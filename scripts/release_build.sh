@@ -5,7 +5,7 @@ declare -A args=(
   [keyid]="9E2D8AFF3BE44244"
 
   # The name of the target binary.
-  [binname]="devkit"
+  [binname]="terraform-provider-phpipam"
 
   # The build target
   [build_target]="build"
