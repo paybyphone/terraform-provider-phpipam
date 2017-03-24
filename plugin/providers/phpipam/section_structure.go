@@ -101,12 +101,12 @@ func resourceSectionSchema() map[string]*schema.Schema {
 func dataSourceSectionSchema() map[string]*schema.Schema {
 	schema := bareSectionSchema()
 	for k, v := range schema {
-		switch {
-		case k == "section_id":
+		switch k {
+		case "section_id":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"name"}
-		case k == "name":
+		case "name":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"section_id"}

@@ -72,12 +72,12 @@ func resourceVLANSchema() map[string]*schema.Schema {
 func dataSourceVLANSchema() map[string]*schema.Schema {
 	schema := bareVLANSchema()
 	for k, v := range schema {
-		switch {
-		case k == "vlan_id":
+		switch k {
+		case "vlan_id":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"number"}
-		case k == "number":
+		case "number":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"vlan_id"}

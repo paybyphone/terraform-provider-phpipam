@@ -141,20 +141,20 @@ func resourceSubnetSchema() map[string]*schema.Schema {
 func dataSourceSubnetSchema() map[string]*schema.Schema {
 	s := bareSubnetSchema()
 	for k, v := range s {
-		switch {
-		case k == "subnet_address" || k == "subnet_mask":
+		switch k {
+		case "subnet_address", "subnet_mask":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"subnet_id", "section_id", "description"}
-		case k == "subnet_id":
+		case "subnet_id":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"subnet_address", "subnet_mask", "section_id", "description"}
-		case k == "section_id":
+		case "section_id":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"subnet_id", "subnet_address", "subnet_mask"}
-		case k == "description":
+		case "description":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"subnet_id", "subnet_address", "subnet_mask", "description_match"}

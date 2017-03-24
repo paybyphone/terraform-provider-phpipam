@@ -126,24 +126,24 @@ func resourceAddressSchema() map[string]*schema.Schema {
 func dataSourceAddressSchema() map[string]*schema.Schema {
 	s := bareAddressSchema()
 	for k, v := range s {
-		switch {
-		case k == "address_id":
+		switch k {
+		case "address_id":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"ip_address", "subnet_id", "description", "hostname"}
-		case k == "ip_address":
+		case "ip_address":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"address_id", "subnet_id", "description", "hostname"}
-		case k == "subnet_id":
+		case "subnet_id":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"ip_address", "address_id"}
-		case k == "description":
+		case "description":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"ip_address", "address_id", "hostname"}
-		case k == "hostname":
+		case "hostname":
 			v.Optional = true
 			v.Computed = true
 			v.ConflictsWith = []string{"ip_address", "address_id", "description"}
