@@ -25,7 +25,6 @@ const (
 // for interpolations such as `aws_instance.foo.bar`.
 type Interpolater struct {
 	Operation          walkOperation
-	Meta               *ContextMeta
 	Module             *module.Tree
 	State              *State
 	StateLock          *sync.RWMutex
@@ -88,8 +87,6 @@ func (i *Interpolater) Values(
 			err = i.valueSelfVar(scope, n, v, result)
 		case *config.SimpleVariable:
 			err = i.valueSimpleVar(scope, n, v, result)
-		case *config.TerraformVariable:
-			err = i.valueTerraformVar(scope, n, v, result)
 		case *config.UserVariable:
 			err = i.valueUserVar(scope, n, v, result)
 		default:
@@ -312,25 +309,6 @@ func (i *Interpolater) valueSimpleVar(
 		n)
 }
 
-func (i *Interpolater) valueTerraformVar(
-	scope *InterpolationScope,
-	n string,
-	v *config.TerraformVariable,
-	result map[string]ast.Variable) error {
-	if v.Field != "env" {
-		return fmt.Errorf(
-			"%s: only supported key for 'terraform.X' interpolations is 'env'", n)
-	}
-
-	if i.Meta == nil {
-		return fmt.Errorf(
-			"%s: internal error: nil Meta. Please report a bug.", n)
-	}
-
-	result[n] = ast.Variable{Type: ast.TypeString, Value: i.Meta.Env}
-	return nil
-}
-
 func (i *Interpolater) valueUserVar(
 	scope *InterpolationScope,
 	n string,
@@ -520,7 +498,7 @@ MISSING:
 	//
 	// For an input walk, computed values are okay to return because we're only
 	// looking for missing variables to prompt the user for.
-	if i.Operation == walkRefresh || i.Operation == walkPlanDestroy || i.Operation == walkInput {
+	if i.Operation == walkRefresh || i.Operation == walkPlanDestroy || i.Operation == walkDestroy || i.Operation == walkInput {
 		return &unknownVariable, nil
 	}
 
@@ -720,10 +698,6 @@ func (i *Interpolater) resourceCountMax(
 	// from the state. Plan and so on may not have any state yet so
 	// we do a full interpolation.
 	if i.Operation != walkApply {
-		if cr == nil {
-			return 0, nil
-		}
-
 		count, err := cr.Count()
 		if err != nil {
 			return 0, err
