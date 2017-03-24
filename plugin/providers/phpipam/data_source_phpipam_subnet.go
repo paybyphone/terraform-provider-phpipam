@@ -54,15 +54,16 @@ func dataSourcePHPIPAMSubnetRead(d *schema.ResourceData, meta interface{}) error
 		}
 		result := -1
 		for n, r := range v {
-			if d.Get("description_match").(string) != "" {
+			switch {
+			// Double-assert that we don't have empty strings in the conditionals
+			// to ensure there there is no edge cases with matching zero values.
+			case d.Get("description_match").(string) != "":
 				// Don't trap error here because we should have already validated the regex via the ValidateFunc.
 				if matched, _ := regexp.MatchString(d.Get("description_match").(string), r.Description); matched {
 					result = n
 				}
-			} else {
-				if r.Description == d.Get("description").(string) {
-					result = n
-				}
+			case d.Get("description").(string) != "" && r.Description == d.Get("description").(string):
+				result = n
 			}
 		}
 		if result == -1 {
