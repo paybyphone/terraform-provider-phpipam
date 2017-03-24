@@ -316,12 +316,22 @@ resource "phpipam_address" {
 
 The data source takes the following parameters:
 
+ * `section_id` - The ID of the section of the subnet. Required if you are
+   looking up a subnet using the `description` or `description_match` arguments.
  * `subnet_id` - The ID of the subnet to look up.
  * `subnet_address` - The network address of the subnet to look up.
  * `subnet_mask` - The subnet mask, in bits, of the subnet to look up.
+ * `description` - The subnet's description. `section_id` is required if you
+   want to use this option.
+ * `description_match` - A regular expression to match against when searching
+   for a subnet. `section_id` is required if you want to use this option.
 
-Either `subnet_id`, or `subnet_address` and `subnet_mask` must be supplied. If
-all three values are supplied, the data source will use `subnet_id`.
+
+Arguments are processed in the following order of precedence:
+
+ * `subnet_id`
+ * `subnet_address` and `subnet_mask`
+ * `section_id`, and either one of `description` or `description_match`
 
 ##### Attribute Reference
 

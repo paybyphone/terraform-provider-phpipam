@@ -8,12 +8,22 @@ import (
 
 const testAccDataSourcePHPIPAMSubnetConfig = `
 data "phpipam_subnet" "subnet_by_cidr" {
-	subnet_address = "10.10.2.0"
-	subnet_mask = 24
+  subnet_address = "10.10.2.0"
+  subnet_mask    = 24
 }
 
 data "phpipam_subnet" "subnet_by_id" {
-	subnet_id = "${data.phpipam_subnet.subnet_by_cidr.subnet_id}"
+  subnet_id = "${data.phpipam_subnet.subnet_by_cidr.subnet_id}"
+}
+
+data "phpipam_subnet" "subnet_by_description" {
+  section_id  = 1
+  description = "Customer 1"
+}
+
+data "phpipam_subnet" "subnet_by_description_match" {
+  section_id  = 1
+  description_match = "ustomer 2"
 }
 `
 
@@ -28,6 +38,9 @@ func TestAccDataSourcePHPIPAMSubnet(t *testing.T) {
 					resource.TestCheckResourceAttrPair("data.phpipam_subnet.subnet_by_cidr", "subnet_id", "data.phpipam_subnet.subnet_by_id", "subnet_id"),
 					resource.TestCheckResourceAttrPair("data.phpipam_subnet.subnet_by_cidr", "subnet_address", "data.phpipam_subnet.subnet_by_id", "subnet_address"),
 					resource.TestCheckResourceAttrPair("data.phpipam_subnet.subnet_by_cidr", "subnet_mask", "data.phpipam_subnet.subnet_by_id", "subnet_mask"),
+					resource.TestCheckResourceAttr("data.phpipam_subnet.subnet_by_description", "subnet_address", "10.10.1.0"),
+					resource.TestCheckResourceAttr("data.phpipam_subnet.subnet_by_description", "subnet_mask", "24"),
+					resource.TestCheckResourceAttr("data.phpipam_subnet.subnet_by_description_match", "subnet_address", "10.10.2.0"),
 				),
 			},
 		},

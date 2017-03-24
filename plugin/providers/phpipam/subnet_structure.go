@@ -1,6 +1,7 @@
 package phpipam
 
 import (
+	"regexp"
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -138,22 +139,47 @@ func resourceSubnetSchema() map[string]*schema.Schema {
 // between subnet/mask and subnet ID. It also ensures that all fields are
 // computed as well.
 func dataSourceSubnetSchema() map[string]*schema.Schema {
-	schema := bareSubnetSchema()
-	for k, v := range schema {
+	s := bareSubnetSchema()
+	for k, v := range s {
 		switch {
 		case k == "subnet_address" || k == "subnet_mask":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"subnet_id"}
+			v.ConflictsWith = []string{"subnet_id", "section_id", "description"}
 		case k == "subnet_id":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"subnet_address", "subnet_mask"}
+			v.ConflictsWith = []string{"subnet_address", "subnet_mask", "section_id", "description"}
+		case k == "section_id":
+			v.Optional = true
+			v.Computed = true
+			v.ConflictsWith = []string{"subnet_id", "subnet_address", "subnet_mask"}
+		case k == "description":
+			v.Optional = true
+			v.Computed = true
+			v.ConflictsWith = []string{"subnet_id", "subnet_address", "subnet_mask", "description_match"}
 		default:
 			v.Computed = true
 		}
 	}
-	return schema
+	// Add the description_match item to the schema. This is a meta-parameter
+	// that is not part of the API resource and exists to instruct PHPIPAM to
+	// do a regex search on the description field of the subnet. This conflicts
+	// with "description" and the other fields that description would normally
+	// conflict with.
+	s["description_match"] = &schema.Schema{
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"subnet_id", "subnet_address", "subnet_mask", "description"},
+		ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
+			_, err := regexp.Compile(v.(string))
+			if err != nil {
+				errors = append(errors, err)
+			}
+			return
+		},
+	}
+	return s
 }
 
 // dataSourceSubnetsSchema returns the sub-schema for the phpipam_subnets data
@@ -226,35 +252,4 @@ func flattenSubnet(s subnets.Subnet, d *schema.ResourceData) {
 	d.Set("utilization_threshold", s.Threshold)
 	d.Set("location_id", s.Location)
 	d.Set("edit_date", s.EditDate)
-}
-
-// flattenSubnetToMap converts a subnets.Subnet into a map[string]interface{}.
-func flattenSubnetToMap(s subnets.Subnet) map[string]interface{} {
-	m := make(map[string]interface{})
-
-	m["subnet_id"] = s.ID
-	m["subnet_address"] = s.SubnetAddress
-	m["subnet_mask"] = s.Mask
-	m["description"] = s.Description
-	m["section_id"] = s.SectionID
-	m["linked_subnet_id"] = s.LinkedSubnet
-	m["vlan_id"] = s.VLANID
-	m["vrf_id"] = s.VRFID
-	m["master_subnet_id"] = s.MasterSubnetID
-	m["nameserver_id"] = s.NameserverID
-	m["show_name"] = s.ShowName
-	m["permissions"] = s.Permissions
-	m["create_ptr_records"] = s.DNSRecursive
-	m["display_hostnames"] = s.DNSRecords
-	m["allow_ip_requests"] = s.AllowRequests
-	m["scan_agent_id"] = s.ScanAgent
-	m["include_in_ping"] = s.PingSubnet
-	m["host_discovery_enabled"] = s.DiscoverSubnet
-	m["is_folder"] = s.IsFolder
-	m["is_full"] = s.IsFull
-	m["utilization_threshold"] = s.Threshold
-	m["location_id"] = s.Location
-	m["edit_date"] = s.EditDate
-
-	return m
 }
