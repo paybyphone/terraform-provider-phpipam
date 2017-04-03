@@ -99,9 +99,30 @@ func (c *Controller) GetAddressesByIP(ipaddr string) (out []Address, err error) 
 	return
 }
 
+// GetAddressCustomFieldsSchema GETs the custom fields for the addresses controller via
+// client.GetCustomFieldsSchema.
+func (c *Controller) GetAddressCustomFieldsSchema() (out map[string]phpipam.CustomField, err error) {
+	out, err = c.Client.GetCustomFieldsSchema("addresses")
+	return
+}
+
+// GetAddressCustomFields GETs the custom fields for a subnet via
+// client.GetCustomFields.
+func (c *Controller) GetAddressCustomFields(id int) (out map[string]interface{}, err error) {
+	out, err = c.Client.GetCustomFields(id, "addresses")
+	return
+}
+
 // UpdateAddress updates an address by sending a PATCH request.
 func (c *Controller) UpdateAddress(in Address) (message string, err error) {
 	err = c.SendRequest("PATCH", "/addresses/", &in, &message)
+	return
+}
+
+// UpdateAddressCustomFields PATCHes the subnet's custom fields via
+// client.UpdateCustomFields.
+func (c *Controller) UpdateAddressCustomFields(id int, in map[string]interface{}) (message string, err error) {
+	message, err = c.Client.UpdateCustomFields(id, in, "addresses")
 	return
 }
 
