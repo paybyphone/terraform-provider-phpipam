@@ -85,6 +85,9 @@ func bareAddressSchema() map[string]*schema.Schema {
 		"edit_date": &schema.Schema{
 			Type: schema.TypeString,
 		},
+		"custom_fields": &schema.Schema{
+			Type: schema.TypeMap,
+		},
 	}
 }
 
