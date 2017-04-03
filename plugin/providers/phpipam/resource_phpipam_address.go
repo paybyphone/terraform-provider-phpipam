@@ -65,22 +65,7 @@ func resourcePHPIPAMAddressUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	// Set custom fields here. We need to make sure of a couple of things:
-	//  * If we have custom fields, we need to do a diff on what is set versus
-	//    what isn't set, and ensure that we clear out the keys that aren't set.
-	//    Since our SDK does not currently support NOT NULL custom fields in
-	//    PHPIPAM, we can safely set these to nil.
-	//  * If we don't have a value for
-	//    custom_fields at all, set all keys to nil and update so that all custom
-	//    fields get blown away.
-	fields, err := c.GetAddressCustomFields(in.ID)
-	if err != nil {
-		return fmt.Errorf("Error getting custom fields for updating: %s", err)
-	}
-	for k, v := range fields {
-	}
-
-	if _, err := c.UpdateAddressCustomFields(in.ID, customFields.(map[string]interface{})); err != nil {
+	if err := updateCustomFields(d, &c); err != nil {
 		return err
 	}
 

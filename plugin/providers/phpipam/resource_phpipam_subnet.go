@@ -1,6 +1,11 @@
 package phpipam
 
-import "github.com/hashicorp/terraform/helper/schema"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/hashicorp/terraform/helper/schema"
+)
 
 // resourcePHPIPAMSubnet returns the resource structure for the phpipam_subnet
 // resource.
@@ -28,6 +33,23 @@ func resourcePHPIPAMSubnetCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
+	// If we have custom fields, set them now. We need to get the subnet's ID
+	// beforehand.
+	if customFields, ok := d.GetOk("custom_fields"); ok {
+		subnets, err := c.GetSubnetsByCIDR(fmt.Sprintf("%s/%d", in.SubnetAddress, in.Mask))
+		if err != nil {
+			return fmt.Errorf("Could not read subnet after creating: %s", err)
+		}
+
+		if len(subnets) != 1 {
+			return errors.New("Subnet either missing or multiple results returned by reading subnet after creation")
+		}
+
+		if _, err := c.UpdateSubnetCustomFields(subnets[0].ID, customFields.(map[string]interface{})); err != nil {
+			return err
+		}
+	}
+
 	return dataSourcePHPIPAMSubnetRead(d, meta)
 }
 
@@ -41,6 +63,10 @@ func resourcePHPIPAMSubnetUpdate(d *schema.ResourceData, meta interface{}) error
 	in.SubnetAddress = ""
 	in.Mask = 0
 	if _, err := c.UpdateSubnet(in); err != nil {
+		return err
+	}
+
+	if err := updateCustomFields(d, &c); err != nil {
 		return err
 	}
 

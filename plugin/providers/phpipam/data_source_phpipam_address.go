@@ -38,8 +38,8 @@ func dataSourcePHPIPAMAddressRead(d *schema.ResourceData, meta interface{}) erro
 			return errors.New("Address search returned either zero or multiple results. Please correct your search and try again")
 		}
 		out = v[0]
-	case d.Get("subnet_id").(int) != 0 && (d.Get("description").(string) != "" || d.Get("hostname").(string) != ""):
-		// If subnet_id and one of description or hostname were defined, we do a
+	case d.Get("subnet_id").(int) != 0 && (d.Get("description").(string) != "" || d.Get("hostname").(string) != "" || d.Get("custom_field_filter_key").(string) != ""):
+		// If subnet_id and one of description or hostname were defined, we do
 		// search via GetAddressesInSubnet and return the first found for one of
 		// the fields.
 		v, err := s.GetAddressesInSubnet(d.Get("subnet_id").(int))
@@ -58,15 +58,37 @@ func dataSourcePHPIPAMAddressRead(d *schema.ResourceData, meta interface{}) erro
 				result = n
 			case d.Get("hostname").(string) != "" && r.Hostname == d.Get("hostname").(string):
 				result = n
+			case d.Get("custom_field_filter_key").(string) != "":
+				fields, err := c.GetAddressCustomFields(r.ID)
+				if err != nil {
+					return err
+				}
+				matchKey := d.Get("custom_field_filter_key").(string)
+				matchValue := d.Get("custom_field_filter_value").(string)
+				matched, err := customFieldFilter(fields, matchKey, matchValue)
+				if err != nil {
+					return err
+				}
+				if matched {
+					result = n
+				}
 			}
 		}
 		if result == -1 {
-			return fmt.Errorf("No address found in subnet id %d with supplied description or hostname", d.Get("subnet_id"))
+			return fmt.Errorf("No address found in subnet id %d with supplied description, hostname or custom field value", d.Get("subnet_id"))
 		}
 		out = v[result]
 	default:
-		return errors.New("No valid combination of parameters found - need one of address_id, ip_address, or subnet_id and (description|hostname)")
+		return errors.New("No valid combination of parameters found - need one of address_id, ip_address, or subnet_id and (description|hostname|custom_field_filter_key)")
 	}
 	flattenAddress(out, d)
+	fields, err := c.GetAddressCustomFields(out.ID)
+	if err != nil {
+		return err
+	}
+	trimMap(fields)
+	if err := d.Set("custom_fields", fields); err != nil {
+		return err
+	}
 	return nil
 }

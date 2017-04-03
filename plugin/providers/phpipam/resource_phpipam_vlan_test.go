@@ -20,6 +20,26 @@ resource "phpipam_vlan" "vlan" {
 }
 `
 
+const testAccResourcePHPIPAMVLANCustomFieldConfig = `
+resource "phpipam_vlan" "vlan" {
+  name        = "terraform"
+  number      = 1999
+  description = "Terraform test vlan (custom field)"
+
+  custom_fields = {
+    CustomTestVLANs = "terraform-test"
+  }
+}
+`
+
+const testAccResourcePHPIPAMVLANCustomFieldUpdateConfig = `
+resource "phpipam_vlan" "vlan" {
+  name        = "terraform"
+  number      = 1999
+  description = "Terraform test vlan (custom field), step 2"
+}
+`
+
 func TestAccResourcePHPIPAMVLAN(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -33,6 +53,36 @@ func TestAccResourcePHPIPAMVLAN(t *testing.T) {
 					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "name", "terraform"),
 					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "number", "1999"),
 					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "description", "Terraform test vlan"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourcePHPIPAMVLAN_CustomFields(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckResourcePHPIPAMVLANDeleted,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccResourcePHPIPAMVLANCustomFieldConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckResourcePHPIPAMVLANCreated,
+					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "name", "terraform"),
+					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "number", "1999"),
+					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "description", "Terraform test vlan"),
+					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "custom_field.CustomTestVLANs", "terraform-test"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccResourcePHPIPAMVLANCustomFieldUpdateConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckResourcePHPIPAMVLANCreated,
+					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "name", "terraform"),
+					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "number", "1999"),
+					resource.TestCheckResourceAttr("phpipam_vlan.vlan", "description", "Terraform test vlan"),
+					resource.TestCheckNoResourceAttr("phpipam_vlan.vlan", "custom_field.CustomTestVLANs"),
 				),
 			},
 		},

@@ -41,6 +41,9 @@ func bareVLANSchema() map[string]*schema.Schema {
 		"edit_date": &schema.Schema{
 			Type: schema.TypeString,
 		},
+		"custom_fields": &schema.Schema{
+			Type: schema.TypeMap,
+		},
 	}
 }
 
@@ -55,6 +58,8 @@ func resourceVLANSchema() map[string]*schema.Schema {
 		// VLAN name and number are required
 		case k == "name" || k == "number":
 			v.Required = true
+		case k == "custom_fields":
+			v.Optional = true
 		case resourceVLANOptionalFields.Has(k):
 			v.Optional = true
 			v.Computed = true
@@ -70,8 +75,8 @@ func resourceVLANSchema() map[string]*schema.Schema {
 // entry ID and VLAN number. It also ensures that all fields are computed as
 // well.
 func dataSourceVLANSchema() map[string]*schema.Schema {
-	schema := bareVLANSchema()
-	for k, v := range schema {
+	s := bareVLANSchema()
+	for k, v := range s {
 		switch k {
 		case "vlan_id":
 			v.Optional = true
@@ -85,7 +90,7 @@ func dataSourceVLANSchema() map[string]*schema.Schema {
 			v.Computed = true
 		}
 	}
-	return schema
+	return s
 }
 
 // expandVLAN returns the vlans.VLAN structure for a
@@ -98,7 +103,6 @@ func expandVLAN(d *schema.ResourceData) vlans.VLAN {
 		Name:        d.Get("name").(string),
 		Number:      d.Get("number").(int),
 		Description: d.Get("description").(string),
-		EditDate:    d.Get("edit_date").(string),
 	}
 
 	return v

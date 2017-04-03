@@ -107,6 +107,9 @@ func bareSubnetSchema() map[string]*schema.Schema {
 		"edit_date": &schema.Schema{
 			Type: schema.TypeString,
 		},
+		"custom_fields": &schema.Schema{
+			Type: schema.TypeMap,
+		},
 	}
 }
 
@@ -124,6 +127,8 @@ func resourceSubnetSchema() map[string]*schema.Schema {
 			v.ForceNew = true
 		case k == "section_id":
 			v.Required = true
+		case k == "custom_fields":
+			v.Optional = true
 		case resourceSubnetOptionalFields.Has(k):
 			v.Optional = true
 			v.Computed = true
@@ -179,6 +184,26 @@ func dataSourceSubnetSchema() map[string]*schema.Schema {
 			return
 		},
 	}
+	// Add the custom_field_filter_key and custom_field_filter_value item to the
+	// schema. These are meta-parameters that allows searching for a custom field
+	// value in the data source.
+	s["custom_field_filter_key"] = &schema.Schema{
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"subnet_id", "subnet_address", "subnet_mask", "description", "description_match"},
+	}
+	s["custom_field_filter_value"] = &schema.Schema{
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"subnet_id", "subnet_address", "subnet_mask", "description", "description_match"},
+		ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
+			_, err := regexp.Compile(v.(string))
+			if err != nil {
+				errors = append(errors, err)
+			}
+			return
+		},
+	}
 	return s
 }
 
@@ -219,7 +244,6 @@ func expandSubnet(d *schema.ResourceData) subnets.Subnet {
 		IsFull:         phpipam.BoolIntString(d.Get("is_full").(bool)),
 		Threshold:      d.Get("utilization_threshold").(int),
 		Location:       d.Get("location_id").(int),
-		EditDate:       d.Get("edit_date").(string),
 	}
 
 	return s

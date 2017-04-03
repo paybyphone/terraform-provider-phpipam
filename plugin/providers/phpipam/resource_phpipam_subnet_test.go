@@ -21,6 +21,33 @@ resource "phpipam_subnet" "subnet" {
 }
 `
 
+const testAccResourcePHPIPAMSubnetCustomFieldConfig = `
+resource "phpipam_subnet" "subnet" {
+  subnet_address = "10.10.3.0"
+  subnet_mask    = 24
+  description    = "Terraform test subnet (custom fields)"
+  section_id     = 1
+
+  custom_fields = {
+    CustomTestAddresses = "terraform-test"
+  }
+}
+`
+
+const testAccResourcePHPIPAMSubnetCustomFieldUpdateConfig = `
+resource "phpipam_subnet" "subnet" {
+  subnet_address = "10.10.3.0"
+  subnet_mask    = 24
+  description    = "Terraform test subnet (custom fields, step 2)"
+  section_id     = 1
+
+  custom_fields = {
+    CustomTestAddresses = "terraform-test"
+  }
+}
+
+`
+
 func TestAccResourcePHPIPAMSubnet(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -34,6 +61,36 @@ func TestAccResourcePHPIPAMSubnet(t *testing.T) {
 					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "subnet_address", "10.10.3.0"),
 					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "subnet_mask", "24"),
 					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "description", "Terraform test subnet"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourcePHPIPAMSubnet_CustomFields(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckResourcePHPIPAMSubnetDeleted,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccResourcePHPIPAMSubnetCustomFieldConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckResourcePHPIPAMSubnetCreated,
+					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "subnet_address", "10.10.3.0"),
+					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "subnet_mask", "24"),
+					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "description", "Terraform test subnet (custom fields)"),
+					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "custom_fields.CustomTestSubnets", "terraform-test"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccResourcePHPIPAMSubnetCustomFieldUpdateConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckResourcePHPIPAMSubnetCreated,
+					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "subnet_address", "10.10.3.0"),
+					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "subnet_mask", "24"),
+					resource.TestCheckResourceAttr("phpipam_subnet.subnet", "description", "Terraform test subnet (custom fields), step 2"),
+					resource.TestCheckNoResourceAttr("phpipam_subnet.subnet", "custom_fields.CustomTestSubnets"),
 				),
 			},
 		},

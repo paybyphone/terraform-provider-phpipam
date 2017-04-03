@@ -1,6 +1,11 @@
 package phpipam
 
-import "github.com/hashicorp/terraform/helper/schema"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/hashicorp/terraform/helper/schema"
+)
 
 // resourcePHPIPAMVLAN returns the resource structure for the phpipam_vlan
 // resource.
@@ -28,6 +33,23 @@ func resourcePHPIPAMVLANCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	// If we have custom fields, set them now. We need to get the IP address's ID
+	// beforehand.
+	if customFields, ok := d.GetOk("custom_fields"); ok {
+		vlans, err := c.GetVLANsByNumber(in.Number)
+		if err != nil {
+			return fmt.Errorf("Could not read VLAN after creating: %s", err)
+		}
+
+		if len(vlans) != 1 {
+			return errors.New("VLAN either missing or multiple results returned by reading VLAN after creation")
+		}
+
+		if _, err := c.UpdateVLANCustomFields(vlans[0].ID, vlans[0].Name, customFields.(map[string]interface{})); err != nil {
+			return err
+		}
+	}
+
 	return dataSourcePHPIPAMVLANRead(d, meta)
 }
 
@@ -36,6 +58,10 @@ func resourcePHPIPAMVLANUpdate(d *schema.ResourceData, meta interface{}) error {
 	in := expandVLAN(d)
 
 	if _, err := c.UpdateVLAN(in); err != nil {
+		return err
+	}
+
+	if err := updateCustomFields(d, &c); err != nil {
 		return err
 	}
 
