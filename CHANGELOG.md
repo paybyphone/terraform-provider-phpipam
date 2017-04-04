@@ -1,6 +1,9 @@
-## 0.1.2-pre
+## 0.1.2
 
-Bumped version for dev.
+Added custom field support - this plugin now supports custom fields in
+addresses, subnets, and VLANs, as long as those fields are optional. Data source
+searching supports addresses and subnets only, due to limitations in VLAN
+searching capabilities.
 
 ## 0.1.1
 
