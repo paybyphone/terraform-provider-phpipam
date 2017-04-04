@@ -1,6 +1,7 @@
 package phpipam
 
 import (
+	"regexp"
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -85,6 +86,9 @@ func bareAddressSchema() map[string]*schema.Schema {
 		"edit_date": &schema.Schema{
 			Type: schema.TypeString,
 		},
+		"custom_fields": &schema.Schema{
+			Type: schema.TypeMap,
+		},
 	}
 }
 
@@ -100,6 +104,8 @@ func resourceAddressSchema() map[string]*schema.Schema {
 		case k == "subnet_id" || k == "ip_address":
 			v.Required = true
 			v.ForceNew = true
+		case k == "custom_fields":
+			v.Optional = true
 		case resourceAddressOptionalFields.Has(k):
 			v.Optional = true
 			v.Computed = true
@@ -151,6 +157,27 @@ func dataSourceAddressSchema() map[string]*schema.Schema {
 			v.Computed = true
 		}
 	}
+
+	// Add the custom_field_filter_key and custom_field_filter_value item to the
+	// schema. These are meta-parameters that allows searching for a custom field
+	// value in the data source.
+	s["custom_field_filter_key"] = &schema.Schema{
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"ip_address", "address_id", "hostname", "description"},
+	}
+	s["custom_field_filter_value"] = &schema.Schema{
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: []string{"ip_address", "address_id", "hostname", "description"},
+		ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
+			_, err := regexp.Compile(v.(string))
+			if err != nil {
+				errors = append(errors, err)
+			}
+			return
+		},
+	}
 	return s
 }
 
@@ -175,7 +202,6 @@ func expandAddress(d *schema.ResourceData) addresses.Address {
 		Note:        d.Get("note").(string),
 		LastSeen:    d.Get("last_seen").(string),
 		ExcludePing: phpipam.BoolIntString(d.Get("exclude_ping").(bool)),
-		EditDate:    d.Get("edit_date").(string),
 	}
 
 	return s

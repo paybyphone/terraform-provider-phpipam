@@ -21,6 +21,28 @@ resource "phpipam_address" "address" {
 }
 `
 
+const testAccResourcePHPIPAMAddressCustomFieldConfig = `
+resource "phpipam_address" "address" {
+  subnet_id   = 3
+  ip_address  = "10.10.1.10"
+  description = "Terraform test address (custom fields)"
+  hostname    = "tf-test.cust1.local"
+
+  custom_fields = {
+    CustomTestAddresses = "terraform-test"
+  }
+}
+`
+
+const testAccResourcePHPIPAMAddressCustomFieldUpdateConfig = `
+resource "phpipam_address" "address" {
+  subnet_id   = 3
+  ip_address  = "10.10.1.10"
+  description = "Terraform test address (custom fields), step 2"
+  hostname    = "tf-test.cust1.local"
+}
+`
+
 func TestAccResourcePHPIPAMAddress(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -35,6 +57,38 @@ func TestAccResourcePHPIPAMAddress(t *testing.T) {
 					resource.TestCheckResourceAttr("phpipam_address.address", "ip_address", "10.10.1.10"),
 					resource.TestCheckResourceAttr("phpipam_address.address", "description", "Terraform test address"),
 					resource.TestCheckResourceAttr("phpipam_address.address", "hostname", "tf-test.cust1.local"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccResourcePHPIPAMAddress_CustomFields(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckResourcePHPIPAMAddressDeleted,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: testAccResourcePHPIPAMAddressCustomFieldConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckResourcePHPIPAMAddressCreated,
+					resource.TestCheckResourceAttr("phpipam_address.address", "subnet_id", "3"),
+					resource.TestCheckResourceAttr("phpipam_address.address", "ip_address", "10.10.1.10"),
+					resource.TestCheckResourceAttr("phpipam_address.address", "description", "Terraform test address (custom fields)"),
+					resource.TestCheckResourceAttr("phpipam_address.address", "hostname", "tf-test.cust1.local"),
+					resource.TestCheckResourceAttr("phpipam_address.address", "custom_fields.CustomTestAddresses", "terraform-test"),
+				),
+			},
+			resource.TestStep{
+				Config: testAccResourcePHPIPAMAddressCustomFieldUpdateConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckResourcePHPIPAMAddressCreated,
+					resource.TestCheckResourceAttr("phpipam_address.address", "subnet_id", "3"),
+					resource.TestCheckResourceAttr("phpipam_address.address", "ip_address", "10.10.1.10"),
+					resource.TestCheckResourceAttr("phpipam_address.address", "description", "Terraform test address (custom fields), step 2"),
+					resource.TestCheckResourceAttr("phpipam_address.address", "hostname", "tf-test.cust1.local"),
+					resource.TestCheckNoResourceAttr("phpipam_address.address", "custom_fields.CustomTestAddresses"),
 				),
 			},
 		},

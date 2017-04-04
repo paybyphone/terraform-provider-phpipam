@@ -110,11 +110,38 @@ features become generally available in the PHPIPAM API, will allow lookup based
 on host name, allowing for better ability for this resource to discover IP
 addresses that have been pre-assigned for a specific resource.
 
-Example:
+**Example:**
 
 ```
 data "phpipam_address" "address" {
   ip_address = "10.10.1.1"
+}
+
+output "address_description" {
+  value = "${data.phpipam_address.address.description}"
+}
+```
+
+**Example With `description`:**
+
+```
+data "phpipam_address" "address" {
+  subnet_id         = 3
+  description_match = "Customer 1"
+}
+
+output "address_description" {
+  value = "${data.phpipam_address.address.description}"
+}
+```
+
+**Example With `custom_field_filter_key` and `custom_field_filter_value`:**
+
+```
+data "phpipam_address" "address" {
+  subnet_id                 = 3
+  custom_field_filter_key   = "CustomTestAddresses"
+  custom_field_filter_value = ".*terraform.*"
 }
 
 output "address_description" {
@@ -134,27 +161,30 @@ The data source takes the following parameters:
    when using this field.
  * `hostname` - The host name of the IP address. `subnet_id` is required when
    using this field.
+ * `custom_field_filter_key` - A name of a custom field to search for.
+ * `custom_field_filter_value` - A regular expression to search on. The regular
+   expression syntax is RE2 syntax for which you can find documentation
+   [here](https://github.com/google/re2/wiki/Syntax). `custom_field_filter_key`
+   is required to use this parameter.
 
-⚠️  **NOTE:** While the `phpipam_subnet` field has a `description_match` field, the
-address data source does not. The intention of `description_match` in
-`phpipam_subnet` is to supply an ad-hoc tagging system where a subnet can be
-assigned to multiple projects at once, which can then be searched on with this
-field. This is in lieu of a custom field scheme that would support such a
-system. Custom fields are not implemented in `phpipam-sdk-go`, and hence are not
-implemented in this plugin - if there is enough demand for it and/or need
-necessitates, this may change.
+⚠️  **NOTE:** `description`, `hostname`, `custom_field_filter_key`, and
+`custom_field_filter_value` fields return the first match found without any
+warnings. If you have multiple addresses assigned to a single host and need to
+search on it, enter a unique value in the description and search on that, or use
+a specific enough value in the `custom_field_filter_value` field to return a
+unique match. IP address searches return errors on multiple results to assert
+that you are getting the specific address you are looking for.
 
-⚠️  **NOTE:** `description` and `hostname` fields return the first match found
-without any warnings. If you have multiple addresses assigned to a single host
-and need to search on it, enter a unique value in the description and search on
-that. IP address searches return errors on multiple results to assert that you
-are getting the specific address you are looking for.
+⚠️  **NOTE:** An empty or unspecified `custom_field_filter_value` is the
+equivalent to a regular expression that matches everything, and hence will
+return the first address it sees in the subnet.
 
 Arguments are processed in the following order of precedence:
 
  * `address_id`
  * `ip_address`
- * `subnet_id`, and either one of `description` or `hostname`
+ * `subnet_id`, and either one of `description`, `hostname`, or
+   `custom_field_filter_key` (and `custom_field_filter_value`)
 
 ##### Attribute Reference
 
@@ -183,6 +213,7 @@ as attributes, and ones that were not supplied are populated.
  * `last_seen` - The last time this IP address answered ping probes.
  * `exclude_ping` - `true` if this address is excluded from ping probes.
  * `edit_date` - The last time this resource was modified.
+ * `custom_fields` - A key/value map of custom fields for this address.
 
 ##### The `phpipam_first_free_address` Data Source
 
@@ -197,7 +228,7 @@ fail. Conversely, marking a subnet as unavailable or used will not prevent this
 data source from returning an IP address, so be aware of this while using this
 resource.
 
-Example:
+**Example:**
 
 ```
 // Look up the subnet
@@ -268,7 +299,7 @@ either by database ID or name. This data can then be used to manage other parts
 of PHPIPAM, such as in the event that the section name is known but not its ID,
 which is required for managing subnets.
 
-Example:
+**Example:**
 
 ```
 data "phpipam_section" "section" {
@@ -320,7 +351,7 @@ as attributes, and ones that were not supplied are populated.
 The `phpipam_subnet` data source gets information on a subnet such as its ID
 (required for creating addresses), description, and more.
 
-Example:
+**Example:**
 
 ```
 // Look up the subnet
@@ -338,6 +369,69 @@ resource "phpipam_address" {
 }
 ```
 
+**Example with `description_match`:**
+
+```
+// Look up the subnet (matching on either case of "customer")
+data "phpipam_subnet" "subnet" {
+  section_id        = 1
+  description_match = "[Cc]ustomer 2"
+}
+
+// Get the first available address
+data "phpipam_first_free_address" "next_address" {
+  subnet_id = "${data.phpipam_subnet.subnet.subnet_id}"
+}
+
+// Reserve the address. Note that we use ignore_changes here to ensure that we
+// don't end up re-allocating this address on future Terraform runs.
+resource "phpipam_address" {
+  subnet_id   = "${data.phpipam_subnet.subnet.subnet_id}"
+  ip_address  = "${data.phpipam_first_free_address.next_address.ip_address}"
+  hostname    = "tf-test-host.example.internal"
+  description = "Managed by Terraform"
+
+  lifecycle {
+    ignore_changes = [
+      "subnet_id",
+      "ip_address",
+    ]
+  }
+}
+```
+
+**Example With `custom_field_filter_key` and `custom_field_filter_value`:**
+
+```
+// Look up the subnet
+data "phpipam_subnet" "subnet" {
+  section_id                = 1
+  custom_field_filter_key   = "CustomTestSubnets"
+  custom_field_filter_value = ".*terraform.*"
+}
+
+// Get the first available address
+data "phpipam_first_free_address" "next_address" {
+  subnet_id = "${data.phpipam_subnet.subnet.subnet_id}"
+}
+
+// Reserve the address. Note that we use ignore_changes here to ensure that we
+// don't end up re-allocating this address on future Terraform runs.
+resource "phpipam_address" {
+  subnet_id   = "${data.phpipam_subnet.subnet.subnet_id}"
+  ip_address  = "${data.phpipam_first_free_address.next_address.ip_address}"
+  hostname    = "tf-test-host.example.internal"
+  description = "Managed by Terraform"
+
+  lifecycle {
+    ignore_changes = [
+      "subnet_id",
+      "ip_address",
+    ]
+  }
+}
+```
+
 ##### Argument Reference
 
 The data source takes the following parameters:
@@ -351,17 +445,28 @@ The data source takes the following parameters:
    want to use this option.
  * `description_match` - A regular expression to match against when searching
    for a subnet. `section_id` is required if you want to use this option.
+ * `custom_field_filter_key` - A name of a custom field to search for.
+ * `custom_field_filter_value` - A regular expression to search on. The regular
+   expression syntax is RE2 syntax for which you can find documentation
+   [here](https://github.com/google/re2/wiki/Syntax). `custom_field_filter_key`
+   is required to use this parameter.
 
-⚠️  **NOTE:** Searches with the `description` or `description_match` fields
-return the first match found without any warnings. Conversely, the resource
-fails if it somehow finds multiple results on a CIDR (subnet and mask) search -
-this is to assert that you are getting the subnet you requested.
+⚠️  **NOTE:** Searches with the `description`, `description_match`,
+`custom_field_filter_key`, and `custom_field_filter_value` fields return the
+first match found without any warnings. Conversely, the resource fails if it
+somehow finds multiple results on a CIDR (subnet and mask) search - this is to
+assert that you are getting the subnet you requested.
+
+⚠️  **NOTE:** An empty or unspecified `custom_field_filter_value` is the
+equivalent to a regular expression that matches everything, and hence will
+return the first subnetit sees in the section.
 
 Arguments are processed in the following order of precedence:
 
  * `subnet_id`
  * `subnet_address` and `subnet_mask`
- * `section_id`, and either one of `description` or `description_match`
+ * `section_id`, and either one of `description`, `description_match`, or
+   `custom_field_filter_key` (and `custom_field_filter_value`)
 
 ##### Attribute Reference
 
@@ -401,6 +506,7 @@ as attributes, and ones that were not supplied are populated.
  * `utilization_threshold` - The subnet's utilization threshold.
  * `location_id` - The ID of the location for this subnet.
  * `edit_date` - The date this resource was last updated.
+ * `custom_fields` - A key/value map of custom fields for this subnet.
 
 #### The `phpipam_vlan` Data Source
 
@@ -409,7 +515,7 @@ database. This can then be used to assign a VLAN to a subnet in the
 `phpipam_subnet` resource. It can also be used to gather other information on
 the VLAN.
 
-Example:
+**Example:**
 
 ```
 data "phpipam_section" "section" {
@@ -451,6 +557,7 @@ as attributes, and ones that were not supplied are populated.
  * `name` - The name/label of the VLAN.
  * `description` - The description supplied to the VLAN.
  * `edit_date` - The date this resource was last updated.
+ * `custom_fields` - A key/value map of custom fields for this VLAN.
 
 ### Resources
 
@@ -463,12 +570,14 @@ to create IP address reservations for IP addresses that have been created by
 other Terraform resources, or supplied by the `phpipam_first_free_address` data
 source. An example usage is below. 
 
-**NOTE:** If you are using the `phpipam_first_free_address` to get the first
+⚠️  **NOTE:** If you are using the `phpipam_first_free_address` to get the first
 free IP address in a specific subnet, make sure you set `subnet_id` and
 `ip_address` as ignored attributes with the `ignore_changes` lifecycle
 attribute. This will prevent Terraform from perpetually deleting and
 re-allocating the address when it sees a different available IP address in the
 `phpipam_first_free_address` data source.
+
+**Example:**
 
 ```
 // Look up the subnet
@@ -489,6 +598,10 @@ resource "phpipam_address" {
   ip_address  = "${data.phpipam_first_free_address.next_address.ip_address}"
   hostname    = "tf-test-host.example.internal"
   description = "Managed by Terraform"
+
+  custom_fields = {
+    CustomTestAddresses = "terraform-test"
+  }
 
   lifecycle {
     ignore_changes = [
@@ -528,6 +641,13 @@ The resource takes the following parameters:
    probes.
  * `remove_dns_on_delete` (Optional) - Removes DNS records created by PHPIPAM
    when the address is deleted from Terraform. Defaults to `true`.
+ * `custom_fields` (Optional) -  A key/value map of custom fields for this address.
+
+⚠️  **NOTE on custom fields:** PHPIPAM installations with custom fields must have
+all fields set to optional when using this plugin. For more info see
+[here](https://github.com/phpipam/phpipam/issues/1073). Further to this, either
+ensure that your fields also do not have default values, or ensure the default
+is set in your TF configuration. Diff loops may happen otherwise!
 
 ##### Attribute Reference
 
@@ -544,7 +664,7 @@ that subnets and IP addresses are entered into. Use this resource if you want to
 manage a section entirely from Terraform. If you just need to get information on
 a section use the `phpipam_section` data source instead.
 
-Example:
+**Example:**
 
 ```
 // Create a section
@@ -590,7 +710,7 @@ things, such as storing the IDs of the subnets you create for AWS, or for a full
 top-down management of subnets and IP addresses in Terraform. If you just need
 to get information on a subnet, use the `phpipam_subnet` data source instead.
 
-Example:
+**Example:**
 
 ```
 data "phpipam_section" "section" {
@@ -598,9 +718,13 @@ data "phpipam_section" "section" {
 }
 
 resource "phpipam_subnet" "subnet" {
-  section_id = "${data.phpipam_section.section.section_id}"
+  section_id     = "${data.phpipam_section.section.section_id}"
   subnet_address = "10.10.3.0"
-  subnet_mask = 24
+  subnet_mask    = 24
+
+  custom_fields = {
+    CustomTestSubnets = "terraform-test"
+  }
 }
 ```
 
@@ -645,6 +769,14 @@ The resource takes the following parameters:
    `Used`).
  * `utilization_threshold` (Optional) - The subnet's utilization threshold.
  * `location_id` (Optional) - The ID of the location for this subnet.
+ * `custom_fields` (Optional) -  A key/value map of custom fields for this
+   subnet.
+
+⚠️  **NOTE on custom fields:** PHPIPAM installations with custom fields must have
+all fields set to optional when using this plugin. For more info see
+[here](https://github.com/phpipam/phpipam/issues/1073). Further to this, either
+ensure that your fields also do not have default values, or ensure the default
+is set in your TF configuration. Diff loops may happen otherwise!
 
 ##### Attribute Reference
 
@@ -662,13 +794,17 @@ set up a VLAN through Terraform, or update details such as its name or
 description. If you are just looking for information on a VLAN, use the
 `phpipam_vlan` data source instead.
 
-Example:
+**Example:**
 
 ```
 resource "phpipam_vlan" "vlan" {
   name        = "tf-test"
   number      = 1000
   description = "Managed by Terraform"
+
+  custom_fields = {
+    CustomTestVLANs = "terraform-test"
+  }
 }
 ```
 
@@ -681,6 +817,14 @@ The resource takes the following parameters:
  * `l2_domain_id` (Optional) - The layer 2 domain ID in the PHPIPAM database.
  * `description` (Optional) - The description supplied to the VLAN.
  * `edit_date` (Optional) - The date this resource was last updated.
+ * `custom_fields` (Optional) -  A key/value map of custom fields for this
+   VLAN.
+
+⚠️  **NOTE on custom fields:** PHPIPAM installations with custom fields must have
+all fields set to optional when using this plugin. For more info see
+[here](https://github.com/phpipam/phpipam/issues/1073). Further to this, either
+ensure that your fields also do not have default values, or ensure the default
+is set in your TF configuration. Diff loops may happen otherwise!
 
 ##### Attribute Reference
 

@@ -147,3 +147,32 @@ func (jis *JSONIntString) UnmarshalJSON(b []byte) error {
 
 	return nil
 }
+
+// CustomField represents a PHPIPAM custom field schema entry.
+//
+// Custom fields are currently embedded in a resource's table (such as subnets
+// or IP addresses) directly. Hence, in order to know what custom fields are
+// currently present for a specific resource, the /custom_fields/ method of a
+// controller needs to be queried first before attempting to fetch these custom
+// fields individually.
+type CustomField struct {
+	// The name of the custom field.
+	Name string `json:"name"`
+
+	// The type of custom field. This directly translates to its MySQL data type
+	// in the applicable resource table.
+	Type string `json:"type"`
+
+	// The the description of the custom field. This shows up as a tooltip in the
+	// UI when working with the custom field.
+	Comment string `json:"Comment,omitempty"`
+
+	// If this is true, this field is required. This translates to the NOT NULL
+	// attribute on the respective field's column. Should be one of YES or NO.
+	Null string `json:"Null,omitempty"`
+
+	// The default entry for this custom field. Note that this is always
+	// stringified and will need to be parsed appropriately when you reading the
+	// actual custom field.
+	Default string `json:"Default,omitempty"`
+}

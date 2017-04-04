@@ -5,6 +5,7 @@ package vlans
 import (
 	"fmt"
 
+	"github.com/paybyphone/phpipam-sdk-go/phpipam"
 	"github.com/paybyphone/phpipam-sdk-go/phpipam/client"
 	"github.com/paybyphone/phpipam-sdk-go/phpipam/session"
 )
@@ -67,9 +68,59 @@ func (c *Controller) GetVLANsByNumber(id int) (out []VLAN, err error) {
 	return
 }
 
+// GetVLANCustomFieldsSchema GETs the custom fields for the vlans controller via
+// client.GetCustomFieldsSchema.
+func (c *Controller) GetVLANCustomFieldsSchema() (out map[string]phpipam.CustomField, err error) {
+	out, err = c.Client.GetCustomFieldsSchema("vlans")
+	return
+}
+
+// GetVLANCustomFields GETs the custom fields for a subnet via
+// client.GetCustomFields.
+func (c *Controller) GetVLANCustomFields(id int) (out map[string]interface{}, err error) {
+	out, err = c.Client.GetCustomFields(id, "vlans")
+	return
+}
+
 // UpdateVLAN updates a VLAN by sending a PATCH request.
 func (c *Controller) UpdateVLAN(in VLAN) (message string, err error) {
 	err = c.SendRequest("PATCH", "/vlans/", &in, &message)
+	return
+}
+
+// UpdateVLANCustomFields PATCHes the vlan's custom fields.
+//
+// This function differs from the custom field functions available in the
+// addresses and subnets controller - while those two controllers do not
+// require any other data outside of the ID to update the custom fields,
+// updating a VLAN requires a name as well.
+func (c *Controller) UpdateVLANCustomFields(id int, name string, in map[string]interface{}) (message string, err error) {
+	// Verify that we are only updating fields that are custom fields.
+	var schema map[string]phpipam.CustomField
+	schema, err = c.GetVLANCustomFieldsSchema()
+	if err != nil {
+		return
+	}
+	for k := range in {
+		for l := range schema {
+			if k == l {
+				goto customFieldFound
+			}
+		}
+		// not found
+		return "", fmt.Errorf("Custom field %s not found in schema for controller vlans", k)
+		// found
+	customFieldFound:
+	}
+
+	params := make(map[string]interface{})
+	for k, v := range in {
+		params[k] = v
+	}
+
+	params["id"] = id
+	params["name"] = name
+	err = c.SendRequest("PATCH", "/vlans/", &params, &message)
 	return
 }
 

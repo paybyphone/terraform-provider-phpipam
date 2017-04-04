@@ -141,6 +141,20 @@ func (c *Controller) GetAddressesInSubnet(id int) (out []addresses.Address, err 
 	return
 }
 
+// GetSubnetCustomFieldsSchema GETs the custom fields for the subnets controller via
+// client.GetCustomFieldsSchema.
+func (c *Controller) GetSubnetCustomFieldsSchema() (out map[string]phpipam.CustomField, err error) {
+	out, err = c.Client.GetCustomFieldsSchema("subnets")
+	return
+}
+
+// GetSubnetCustomFields GETs the custom fields for a subnet via
+// client.GetCustomFields.
+func (c *Controller) GetSubnetCustomFields(id int) (out map[string]interface{}, err error) {
+	out, err = c.Client.GetCustomFields(id, "subnets")
+	return
+}
+
 // UpdateSubnet updates a subnet by sending a PATCH request.
 //
 // Note you cannot use this function to update a subnet's CIDR - to split,
@@ -148,6 +162,13 @@ func (c *Controller) GetAddressesInSubnet(id int) (out []addresses.Address, err 
 // not implemented in this SDK. See the API spec for more details.
 func (c *Controller) UpdateSubnet(in Subnet) (message string, err error) {
 	err = c.SendRequest("PATCH", "/subnets/", &in, &message)
+	return
+}
+
+// UpdateSubnetCustomFields PATCHes the subnet's custom fields via
+// client.UpdateCustomFields.
+func (c *Controller) UpdateSubnetCustomFields(id int, in map[string]interface{}) (message string, err error) {
+	message, err = c.Client.UpdateCustomFields(id, in, "subnets")
 	return
 }
 
