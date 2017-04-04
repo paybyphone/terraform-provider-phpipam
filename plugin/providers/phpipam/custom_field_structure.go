@@ -27,7 +27,7 @@ func customFieldFilter(data map[string]interface{}, matchKey, matchValue string)
 			case string:
 				return regexp.MatchString(matchValue, v)
 			default:
-				return false, fmt.Errorf("Key %s is not a string or stringified value, which we currently do not support", k)
+				return false, fmt.Errorf("Key %s's value is not a string or stringified value, which we currently do not support (%#v)", k, v)
 			}
 		}
 	}
@@ -70,6 +70,8 @@ func updateCustomFields(d *schema.ResourceData, client interface{}) error {
 		old, err = c.GetSubnetCustomFields(d.Get("subnet_id").(int))
 	case *vlans.Controller:
 		old, err = c.GetVLANCustomFields(d.Get("vlan_id").(int))
+	default:
+		panic(fmt.Errorf("Invalid client type passed %#v - this is a bug!!!", client))
 	}
 	if err != nil {
 		return fmt.Errorf("Error getting custom fields for updating: %s", err)
@@ -92,6 +94,8 @@ nextKey:
 		_, err = c.UpdateSubnetCustomFields(d.Get("subnet_id").(int), customFields)
 	case *vlans.Controller:
 		_, err = c.UpdateVLANCustomFields(d.Get("vlan_id").(int), d.Get("name").(string), customFields)
+	default:
+		panic(fmt.Errorf("Invalid client type passed %#v - this is a bug!!!", client))
 	}
 	return err
 }

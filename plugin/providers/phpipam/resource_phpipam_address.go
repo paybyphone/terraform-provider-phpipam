@@ -65,7 +65,7 @@ func resourcePHPIPAMAddressUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	if err := updateCustomFields(d, &c); err != nil {
+	if err := updateCustomFields(d, c); err != nil {
 		return err
 	}
 

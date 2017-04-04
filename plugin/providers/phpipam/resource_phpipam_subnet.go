@@ -66,7 +66,7 @@ func resourcePHPIPAMSubnetUpdate(d *schema.ResourceData, meta interface{}) error
 		return err
 	}
 
-	if err := updateCustomFields(d, &c); err != nil {
+	if err := updateCustomFields(d, c); err != nil {
 		return err
 	}
 

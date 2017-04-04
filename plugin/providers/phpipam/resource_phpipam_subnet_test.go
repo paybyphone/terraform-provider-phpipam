@@ -29,7 +29,7 @@ resource "phpipam_subnet" "subnet" {
   section_id     = 1
 
   custom_fields = {
-    CustomTestAddresses = "terraform-test"
+    CustomTestSubnets = "terraform-test"
   }
 }
 `
@@ -38,12 +38,8 @@ const testAccResourcePHPIPAMSubnetCustomFieldUpdateConfig = `
 resource "phpipam_subnet" "subnet" {
   subnet_address = "10.10.3.0"
   subnet_mask    = 24
-  description    = "Terraform test subnet (custom fields, step 2)"
+  description    = "Terraform test subnet (custom fields), step 2"
   section_id     = 1
-
-  custom_fields = {
-    CustomTestAddresses = "terraform-test"
-  }
 }
 
 `
