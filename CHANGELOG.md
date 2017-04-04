@@ -1,3 +1,7 @@
+## 0.1.3-pre
+
+Bumped version for dev.
+
 ## 0.1.2
 
 Added custom field support - this plugin now supports custom fields in
