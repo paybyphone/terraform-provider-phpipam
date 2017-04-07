@@ -36,13 +36,17 @@ resource "phpipam_subnet" "subnet" {
 
   custom_fields = {
     CustomTestSubnets = "terraform-test"
+    CustomTestSubnets2 = "terraform2-test"
   }
 }
 
 data "phpipam_subnet" "custom_search" {
-  section_id  = "${phpipam_subnet.subnet.section_id}"
-  custom_field_filter_key   = "CustomTestSubnets"
-  custom_field_filter_value = ".*terraform.*"
+  section_id = "${phpipam_subnet.subnet.section_id}"
+
+  custom_field_filter = {
+    CustomTestSubnets = ".*terraform.*"
+    CustomTestSubnets2 = ".*terraform2.*"
+  }
 }
 `
 

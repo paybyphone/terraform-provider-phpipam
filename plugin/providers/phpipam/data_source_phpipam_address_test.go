@@ -34,14 +34,18 @@ resource "phpipam_address" "address" {
   hostname    = "tf-test.cust1.local"
 
   custom_fields = {
-    CustomTestAddresses = "terraform-test"
+    CustomTestAddresses  = "terraform-test"
+    CustomTestAddresses2 = "terraform2-test"
   }
 }
 
 data "phpipam_address" "custom_search" {
-  subnet_id                 = "${phpipam_address.address.subnet_id}"
-  custom_field_filter_key   = "CustomTestAddresses"
-  custom_field_filter_value = ".*terraform.*"
+  subnet_id = "${phpipam_address.address.subnet_id}"
+
+  custom_field_filter = {
+    CustomTestAddresses  = ".*terraform.*"
+    CustomTestAddresses2 = ".*terraform2.*"
+  }
 }
 `
 
@@ -77,6 +81,7 @@ func TestAccDataSourcePHPIPAMAddress_CustomField(t *testing.T) {
 					resource.TestCheckResourceAttr("data.phpipam_address.custom_search", "description", "Terraform test address (custom fields)"),
 					resource.TestCheckResourceAttr("data.phpipam_address.custom_search", "hostname", "tf-test.cust1.local"),
 					resource.TestCheckResourceAttr("data.phpipam_address.custom_search", "custom_fields.CustomTestAddresses", "terraform-test"),
+					resource.TestCheckResourceAttr("data.phpipam_address.custom_search", "custom_fields.CustomTestAddresses2", "terraform2-test"),
 				),
 			},
 		},

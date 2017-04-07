@@ -3,6 +3,7 @@ package phpipam
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -44,6 +45,8 @@ func resourcePHPIPAMVLANCreate(d *schema.ResourceData, meta interface{}) error {
 		if len(vlans) != 1 {
 			return errors.New("VLAN either missing or multiple results returned by reading VLAN after creation")
 		}
+
+		d.SetId(strconv.Itoa(vlans[0].ID))
 
 		if _, err := c.UpdateVLANCustomFields(vlans[0].ID, vlans[0].Name, customFields.(map[string]interface{})); err != nil {
 			return err
