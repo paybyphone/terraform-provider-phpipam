@@ -1,3 +1,7 @@
+## 0.2.1-pre
+
+Bumped version for dev.
+
 ## 0.2.0
 
 New version with some breaking changes regarding custom fields:
