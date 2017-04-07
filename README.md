@@ -135,13 +135,15 @@ output "address_description" {
 }
 ```
 
-**Example With `custom_field_filter_key` and `custom_field_filter_value`:**
+**Example With `custom_field_filter`:**
 
 ```
 data "phpipam_address" "address" {
-  subnet_id                 = 3
-  custom_field_filter_key   = "CustomTestAddresses"
-  custom_field_filter_value = ".*terraform.*"
+  subnet_id = 3
+
+  custom_field_filter {
+    CustomTestAddresses = ".*terraform.*"
+  }
 }
 
 output "address_description" {
@@ -161,21 +163,17 @@ The data source takes the following parameters:
    when using this field.
  * `hostname` - The host name of the IP address. `subnet_id` is required when
    using this field.
- * `custom_field_filter_key` - A name of a custom field to search for.
- * `custom_field_filter_value` - A regular expression to search on. The regular
-   expression syntax is RE2 syntax for which you can find documentation
-   [here](https://github.com/google/re2/wiki/Syntax). `custom_field_filter_key`
-   is required to use this parameter.
+ * `custom_field_filter` - A map of custom fields to search for. The filter
+   values are regular expressions that follow the RE2 syntax for which you can
+   find documentation [here](https://github.com/google/re2/wiki/Syntax). All
+   fields need to match for the match to succeed. 
 
-⚠️  **NOTE:** `description`, `hostname`, `custom_field_filter_key`, and
-`custom_field_filter_value` fields return the first match found without any
-warnings. If you have multiple addresses assigned to a single host and need to
-search on it, enter a unique value in the description and search on that, or use
-a specific enough value in the `custom_field_filter_value` field to return a
-unique match. IP address searches return errors on multiple results to assert
-that you are getting the specific address you are looking for.
+⚠️  **NOTE:** `description`, `hostname`, and `custom_field_filter` fields return
+the first match found without any warnings. If you are looking to return
+multiple addresses, combine this data source with the `phpipam_addresses` data
+source.
 
-⚠️  **NOTE:** An empty or unspecified `custom_field_filter_value` is the
+⚠️  **NOTE:** An empty or unspecified `custom_field_filter` value is the
 equivalent to a regular expression that matches everything, and hence will
 return the first address it sees in the subnet.
 
@@ -184,12 +182,11 @@ Arguments are processed in the following order of precedence:
  * `address_id`
  * `ip_address`
  * `subnet_id`, and either one of `description`, `hostname`, or
-   `custom_field_filter_key` (and `custom_field_filter_value`)
+   `custom_field_filter`
 
 ##### Attribute Reference
 
-The following attributes are exported. In addition, all arguments are available
-as attributes, and ones that were not supplied are populated.
+The following attributes are exported:
 
  * `address_id` - The ID of the IP address in the PHPIPAM database.
  * `ip_address` - the IP address.
@@ -214,6 +211,66 @@ as attributes, and ones that were not supplied are populated.
  * `exclude_ping` - `true` if this address is excluded from ping probes.
  * `edit_date` - The last time this resource was modified.
  * `custom_fields` - A key/value map of custom fields for this address.
+
+##### The `phpipam_addresses` Data Source
+
+The `phpipam_addresses` data source allows you to search for IP addresses, much
+in the same way as you can in the single-form `phpipam_address` data source.
+However, multiple addresses are returned from this data source as a single list
+of address IDs as they are found in the PHPIPAM database. You can then use the
+single-form `phpipam_address` data source to extract the IP data for each
+matched address in the database.
+
+**Example:**
+
+⚠️  **NOTE:** The below example requires Terraform v0.9.0 or later!
+
+```
+data "phpipam_addresses" "address_search" {
+  subnet_id = 3
+
+  custom_field_filter {
+    CustomTestAddresses = ".*terraform.*"
+  }
+}
+
+data "phpipam_address" "addresses" {
+  count      = "${length(data.phpipam_addresses.address_search.address_ids)}"
+  address_id = "${element(data.phpipam_addresses.address_search.address_ids, count.index)}"
+}
+
+output "ip_addresses" {
+  value = ["${data.phpipam_address.addresses.*.ip_address}"]
+}
+```
+
+##### Argument Reference
+
+The data source takes the following parameters:
+
+ * `subnet_id` (Required) - The ID of the subnet that the address resides in. This is
+   required to search on the `description` or `hostname` fields.
+
+One of the following fields is required alongside `subnet_id`:
+
+ * `description` - The description of the IP address. `subnet_id` is required
+   when using this field.
+ * `hostname` - The host name of the IP address. `subnet_id` is required when
+   using this field.
+ * `custom_field_filter` - A map of custom fields to search for. The filter
+   values are regular expressions that follow the RE2 syntax for which you can
+   find documentation [here](https://github.com/google/re2/wiki/Syntax). All
+   fields need to match for the match to succeed. 
+
+⚠️  **NOTE:** An empty or unspecified `custom_field_filter` value is the
+equivalent to a regular expression that matches everything, and hence will
+return **all** addresses that contain the referenced custom field key!
+
+##### Attribute Reference
+
+The following attributes are exported:
+
+ * `address_ids` - A list of discovered IP address IDs.
 
 ##### The `phpipam_first_free_address` Data Source
 
@@ -325,8 +382,7 @@ One of `section_id` or `name` must be supplied. If both are supplied,
 
 ##### Attribute Reference
 
-The following attributes are exported. In addition, all arguments are available
-as attributes, and ones that were not supplied are populated.
+The following attributes are exported:
 
  * `section_id` - The ID of the section in the PHPIPAM database.
  * `name` - The name of the section.
@@ -400,14 +456,16 @@ resource "phpipam_address" {
 }
 ```
 
-**Example With `custom_field_filter_key` and `custom_field_filter_value`:**
+**Example With `custom_field_filter`:**
 
 ```
 // Look up the subnet
 data "phpipam_subnet" "subnet" {
-  section_id                = 1
-  custom_field_filter_key   = "CustomTestSubnets"
-  custom_field_filter_value = ".*terraform.*"
+  section_id = 1
+
+  custom_field_filter = {
+    CustomTestSubnets = ".*terraform.*"
+  }
 }
 
 // Get the first available address
@@ -445,19 +503,19 @@ The data source takes the following parameters:
    want to use this option.
  * `description_match` - A regular expression to match against when searching
    for a subnet. `section_id` is required if you want to use this option.
- * `custom_field_filter_key` - A name of a custom field to search for.
- * `custom_field_filter_value` - A regular expression to search on. The regular
-   expression syntax is RE2 syntax for which you can find documentation
-   [here](https://github.com/google/re2/wiki/Syntax). `custom_field_filter_key`
-   is required to use this parameter.
+ * `custom_field_filter` - A map of custom fields to search for. The filter
+   values are regular expressions that follow the RE2 syntax for which you can
+   find documentation [here](https://github.com/google/re2/wiki/Syntax). All
+   fields need to match for the match to succeed. 
 
-⚠️  **NOTE:** Searches with the `description`, `description_match`,
-`custom_field_filter_key`, and `custom_field_filter_value` fields return the
-first match found without any warnings. Conversely, the resource fails if it
-somehow finds multiple results on a CIDR (subnet and mask) search - this is to
-assert that you are getting the subnet you requested.
+⚠️  **NOTE:** Searches with the `description`, `description_match` and
+`custom_field_filter` fields return the first match found without any warnings.
+Conversely, the resource fails if it somehow finds multiple results on a CIDR
+(subnet and mask) search - this is to assert that you are getting the subnet you
+requested. If you want to return multiple results, combine this data source with
+the `phpipam_subnets` data source.
 
-⚠️  **NOTE:** An empty or unspecified `custom_field_filter_value` is the
+⚠️  **NOTE:** An empty or unspecified `custom_field_filter` value is the
 equivalent to a regular expression that matches everything, and hence will
 return the first subnetit sees in the section.
 
@@ -466,12 +524,11 @@ Arguments are processed in the following order of precedence:
  * `subnet_id`
  * `subnet_address` and `subnet_mask`
  * `section_id`, and either one of `description`, `description_match`, or
-   `custom_field_filter_key` (and `custom_field_filter_value`)
+   `custom_field_filter`
 
 ##### Attribute Reference
 
-The following attributes are exported. In addition, all arguments are available
-as attributes, and ones that were not supplied are populated.
+The following attributes are exported:
 
  * `subnet_id` - The ID of the subnet in the PHPIPAM database.
  * `subnet_address` - The network address of the subnet.
@@ -507,6 +564,71 @@ as attributes, and ones that were not supplied are populated.
  * `location_id` - The ID of the location for this subnet.
  * `edit_date` - The date this resource was last updated.
  * `custom_fields` - A key/value map of custom fields for this subnet.
+
+##### The `phpipam_subnets` Data Source
+
+The `phpipam_subnets` data source allows you to search for subnets, much in the
+same way as you can in the single-form `phpipam_subnet` data source.  However,
+multiple subnets are returned from this data source as a single list of subnet
+IDs as they are found in the PHPIPAM database. You can then use the single-form
+`phpipam_subnet` data source to extract the subnet data for each matched network
+in the database.
+
+**Example:**
+
+⚠️  **NOTE:** The below example requires Terraform v0.9.0 or later!
+
+```
+data "phpipam_subnets" "subnet_search" {
+  subnet_id = 3
+
+  custom_field_filter {
+    CustomTestSubnets = ".*terraform.*"
+  }
+}
+
+data "phpipam_subnet" "subnets" {
+  count      = "${length(data.phpipam_subnets.subnet_search.subnet_ids)}"
+  address_id = "${element(data.phpipam_subnets.subnet_search.subnet_ids, count.index)}"
+}
+
+output "subnet_addresses" {
+  value = ["${data.phpipam_subnet.subnets.*.ip_address}"]
+}
+
+output "subnet_cidrs" {
+  value = ["${formatlist("%s/%d", data.phpipam_subnet.subnets.*.subnet_address, data.phpipam_subnet.subnets.*.subnet_mask)}"]
+}
+```
+
+##### Argument Reference
+
+The data source takes the following parameters:
+
+ * `section_id` (Required) - The ID of the section of the subnet.
+
+One of the following below parameters is required:
+
+ * `description` - The subnet's description.
+ * `description_match` - A regular expression to match against when searching
+   for a subnet.
+ * `custom_field_filter` - A map of custom fields to search for. The filter
+   values are regular expressions. All fields need to match for the match to
+   succeed. 
+
+You can find documentation for the regular expression syntax used with the
+`description_match` and `custom_field_filter` attributes
+[here](https://github.com/google/re2/wiki/Syntax).
+
+⚠️  **NOTE:** An empty or unspecified `custom_field_filter` value is the
+equivalent to a regular expression that matches everything, and hence will
+return **all** subnets that contain the referenced custom field key!
+
+##### Attribute Reference
+
+The following attributes are exported:
+
+ * `subnet_ids` - A list of subnet IDs that match the given criteria.
 
 #### The `phpipam_vlan` Data Source
 
@@ -547,8 +669,7 @@ One of `vlan_id` or `number` must be supplied. If both are supplied,
 
 ##### Attribute Reference
 
-The following attributes are exported. In addition, all arguments are available
-as attributes, and ones that were not supplied are populated.
+The following attributes are exported:
 
  * `vlan_id` - The ID of the VLAN to look up. **NOTE:** this is the database ID,
    not the VLAN number - if you need this, use the `number` parameter.
