@@ -1,7 +1,7 @@
 package phpipam
 
 import (
-	"regexp"
+	"errors"
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -136,11 +136,11 @@ func dataSourceAddressSchema() map[string]*schema.Schema {
 		case "address_id":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"ip_address", "subnet_id", "description", "hostname"}
+			v.ConflictsWith = []string{"ip_address", "subnet_id", "description", "hostname", "custom_field_filter"}
 		case "ip_address":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"address_id", "subnet_id", "description", "hostname"}
+			v.ConflictsWith = []string{"address_id", "subnet_id", "description", "hostname", "custom_field_filter"}
 		case "subnet_id":
 			v.Optional = true
 			v.Computed = true
@@ -148,36 +148,19 @@ func dataSourceAddressSchema() map[string]*schema.Schema {
 		case "description":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"ip_address", "address_id", "hostname"}
+			v.ConflictsWith = []string{"ip_address", "address_id", "hostname", "custom_field_filter"}
 		case "hostname":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"ip_address", "address_id", "description"}
+			v.ConflictsWith = []string{"ip_address", "address_id", "description", "custom_field_filter"}
 		default:
 			v.Computed = true
 		}
 	}
+	// Add the custom_field_filter item to the schema. This is a meta-parameter
+	// that allows searching for a custom field value in the data source.
+	s["custom_field_filter"] = customFieldFilterSchema([]string{"ip_address", "address_id", "hostname", "description"})
 
-	// Add the custom_field_filter_key and custom_field_filter_value item to the
-	// schema. These are meta-parameters that allows searching for a custom field
-	// value in the data source.
-	s["custom_field_filter_key"] = &schema.Schema{
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"ip_address", "address_id", "hostname", "description"},
-	}
-	s["custom_field_filter_value"] = &schema.Schema{
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"ip_address", "address_id", "hostname", "description"},
-		ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
-			_, err := regexp.Compile(v.(string))
-			if err != nil {
-				errors = append(errors, err)
-			}
-			return
-		},
-	}
 	return s
 }
 
@@ -228,4 +211,48 @@ func flattenAddress(a addresses.Address, d *schema.ResourceData) {
 	d.Set("last_seen", a.LastSeen)
 	d.Set("exclude_ping", a.ExcludePing)
 	d.Set("edit_date", a.EditDate)
+}
+
+// addressSearchInSubnet provides the address search functionality for both the
+// phpipam_address and phpipam_addresses data sources, returning an
+// []addresses.Address to the particular data source that is calling the
+// function. From here it's up to the specific data source to determine what
+// they want to do with the results (ie: reject it on matching nothing or more
+// than one for the singular data source, or extracting the IDs for the plural
+// one).
+func addressSearchInSubnet(d *schema.ResourceData, meta interface{}) ([]addresses.Address, error) {
+	c := meta.(*ProviderPHPIPAMClient).addressesController
+	s := meta.(*ProviderPHPIPAMClient).subnetsController
+	result := make([]addresses.Address, 0)
+	v, err := s.GetAddressesInSubnet(d.Get("subnet_id").(int))
+	if err != nil {
+		return result, err
+	}
+	if len(v) == 0 {
+		return result, errors.New("No addresses were found in the supplied subnet")
+	}
+	for _, r := range v {
+		switch {
+		// Double-assert that we don't have empty strings in the conditionals
+		// to ensure there there is no edge cases with matching zero values.
+		case d.Get("description").(string) != "" && r.Description == d.Get("description").(string):
+			result = append(result, r)
+		case d.Get("hostname").(string) != "" && r.Hostname == d.Get("hostname").(string):
+			result = append(result, r)
+		case len(d.Get("custom_field_filter").(map[string]interface{})) > 0:
+			fields, err := c.GetAddressCustomFields(r.ID)
+			if err != nil {
+				return result, err
+			}
+			search := d.Get("custom_field_filter").(map[string]interface{})
+			matched, err := customFieldFilter(fields, search)
+			if err != nil {
+				return result, err
+			}
+			if matched {
+				result = append(result, r)
+			}
+		}
+	}
+	return result, nil
 }

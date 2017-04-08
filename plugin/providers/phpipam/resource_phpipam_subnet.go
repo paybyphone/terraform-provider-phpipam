@@ -3,6 +3,7 @@ package phpipam
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -44,6 +45,8 @@ func resourcePHPIPAMSubnetCreate(d *schema.ResourceData, meta interface{}) error
 		if len(subnets) != 1 {
 			return errors.New("Subnet either missing or multiple results returned by reading subnet after creation")
 		}
+
+		d.SetId(strconv.Itoa(subnets[0].ID))
 
 		if _, err := c.UpdateSubnetCustomFields(subnets[0].ID, customFields.(map[string]interface{})); err != nil {
 			return err

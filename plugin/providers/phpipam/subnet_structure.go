@@ -1,6 +1,7 @@
 package phpipam
 
 import (
+	"errors"
 	"regexp"
 	"strconv"
 
@@ -150,11 +151,11 @@ func dataSourceSubnetSchema() map[string]*schema.Schema {
 		case "subnet_address", "subnet_mask":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"subnet_id", "section_id", "description"}
+			v.ConflictsWith = []string{"subnet_id", "section_id", "description", "custom_field_filter"}
 		case "subnet_id":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"subnet_address", "subnet_mask", "section_id", "description"}
+			v.ConflictsWith = []string{"subnet_address", "subnet_mask", "section_id", "description", "custom_field_filter"}
 		case "section_id":
 			v.Optional = true
 			v.Computed = true
@@ -162,7 +163,7 @@ func dataSourceSubnetSchema() map[string]*schema.Schema {
 		case "description":
 			v.Optional = true
 			v.Computed = true
-			v.ConflictsWith = []string{"subnet_id", "subnet_address", "subnet_mask", "description_match"}
+			v.ConflictsWith = []string{"subnet_id", "subnet_address", "subnet_mask", "description_match", "custom_field_filter"}
 		default:
 			v.Computed = true
 		}
@@ -172,38 +173,12 @@ func dataSourceSubnetSchema() map[string]*schema.Schema {
 	// do a regex search on the description field of the subnet. This conflicts
 	// with "description" and the other fields that description would normally
 	// conflict with.
-	s["description_match"] = &schema.Schema{
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"subnet_id", "subnet_address", "subnet_mask", "description"},
-		ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
-			_, err := regexp.Compile(v.(string))
-			if err != nil {
-				errors = append(errors, err)
-			}
-			return
-		},
-	}
-	// Add the custom_field_filter_key and custom_field_filter_value item to the
-	// schema. These are meta-parameters that allows searching for a custom field
-	// value in the data source.
-	s["custom_field_filter_key"] = &schema.Schema{
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"subnet_id", "subnet_address", "subnet_mask", "description", "description_match"},
-	}
-	s["custom_field_filter_value"] = &schema.Schema{
-		Type:          schema.TypeString,
-		Optional:      true,
-		ConflictsWith: []string{"subnet_id", "subnet_address", "subnet_mask", "description", "description_match"},
-		ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
-			_, err := regexp.Compile(v.(string))
-			if err != nil {
-				errors = append(errors, err)
-			}
-			return
-		},
-	}
+	s["description_match"] = subnetDescriptionMatchSchema([]string{"subnet_id", "subnet_address", "subnet_mask", "description", "custom_field_filter"})
+
+	// Add the custom_field_filter item to the schema. This is a meta-parameter
+	// that allows searching for a custom field value in the data source.
+	s["custom_field_filter"] = customFieldFilterSchema([]string{"subnet_id", "subnet_address", "subnet_mask", "description", "description_match"})
+
 	return s
 }
 
@@ -276,4 +251,76 @@ func flattenSubnet(s subnets.Subnet, d *schema.ResourceData) {
 	d.Set("utilization_threshold", s.Threshold)
 	d.Set("location_id", s.Location)
 	d.Set("edit_date", s.EditDate)
+}
+
+// subnetDescriptionMatchSchema returns a *schema.Schema for description
+// matching for subnet-related resources. The conflicting keys are populated by
+// the passed in string slice.
+func subnetDescriptionMatchSchema(conflicts []string) *schema.Schema {
+	return &schema.Schema{
+		Type:          schema.TypeString,
+		Optional:      true,
+		ConflictsWith: conflicts,
+		ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
+			_, err := regexp.Compile(v.(string))
+			if err != nil {
+				errors = append(errors, err)
+			}
+			return
+		},
+	}
+}
+
+// subnetSearchInSection provides the subnet search functionality for both the
+// phpipam_subnet and phpipam_subnets data sources, returning a
+// []subnets.Subnet to the particular data source that is calling the function.
+// From here it's up to the specific data source to determine what they want to
+// do with the results (ie: reject it on matching nothing or more than one for
+// the singular data source, or extracting the IDs for the plural one).
+func subnetSearchInSection(d *schema.ResourceData, meta interface{}) ([]subnets.Subnet, error) {
+	c := meta.(*ProviderPHPIPAMClient).subnetsController
+	s := meta.(*ProviderPHPIPAMClient).sectionsController
+	result := make([]subnets.Subnet, 0)
+
+	v, err := s.GetSubnetsInSection(d.Get("section_id").(int))
+	if err != nil {
+		return result, err
+	}
+	if len(v) == 0 {
+		return result, errors.New("No subnets were found in the supplied section")
+	}
+	for _, r := range v {
+		switch {
+		// Double-assert that we don't have empty strings in the conditionals
+		// to ensure there there is no edge cases with matching zero values.
+		case d.Get("description_match").(string) != "":
+			// Don't trap error here because we should have already validated the regex via the ValidateFunc.
+			if matched, _ := regexp.MatchString(d.Get("description_match").(string), r.Description); matched {
+				result = append(result, r)
+			}
+		case d.Get("description").(string) != "" && r.Description == d.Get("description").(string):
+			result = append(result, r)
+		case len(d.Get("custom_field_filter").(map[string]interface{})) > 0:
+			// Skip folders for now as there is issues pulling them down in the API.
+			if r.IsFolder {
+				continue
+			}
+			fields, err := c.GetSubnetCustomFields(r.ID)
+			if err != nil {
+				return result, err
+			}
+			search := d.Get("custom_field_filter").(map[string]interface{})
+			if err != nil {
+				return result, err
+			}
+			matched, err := customFieldFilter(fields, search)
+			if err != nil {
+				return result, err
+			}
+			if matched {
+				result = append(result, r)
+			}
+		}
+	}
+	return result, nil
 }
