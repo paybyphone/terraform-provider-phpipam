@@ -5,9 +5,9 @@ package addresses
 import (
 	"fmt"
 
-	"github.com/paybyphone/phpipam-sdk-go/phpipam"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam/client"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam/session"
+	"github.com/youkoulayley/phpipam-sdk-go/phpipam"
+	"github.com/youkoulayley/phpipam-sdk-go/phpipam/client"
+	"github.com/youkoulayley/phpipam-sdk-go/phpipam/session"
 )
 
 // Address represents an IP address resource within PHPIPAM.
