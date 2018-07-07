@@ -5,9 +5,9 @@ package vlans
 import (
 	"fmt"
 
-	"github.com/paybyphone/phpipam-sdk-go/phpipam"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam/client"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam/session"
+	"github.com/youkoulayley/phpipam-sdk-go/phpipam"
+	"github.com/youkoulayley/phpipam-sdk-go/phpipam/client"
+	"github.com/youkoulayley/phpipam-sdk-go/phpipam/session"
 )
 
 // VLAN represents a PHPIPAM VLAN.

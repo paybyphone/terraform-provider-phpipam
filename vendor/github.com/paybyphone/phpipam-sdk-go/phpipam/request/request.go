@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/paybyphone/phpipam-sdk-go/phpipam/session"
+	"github.com/youkoulayley/phpipam-sdk-go/phpipam/session"
 )
 
 // APIResponse represents a PHPIPAM response body. Both successful and
