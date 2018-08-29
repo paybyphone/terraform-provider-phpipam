@@ -31,8 +31,13 @@ func resourcePHPIPAMAddressCreate(d *schema.ResourceData, meta interface{}) erro
 	// Assert the ID field here is empty. If this is not empty the request will fail.
 	in.ID = 0
 
-	if _, err := c.CreateAddress(in); err != nil {
+	ip, err := c.CreateAddress(in)
+	if err != nil {
 		return err
+	}
+
+	if in.IPAddress == "" {
+		d.Set("ip_address", ip)
 	}
 
 	// If we have custom fields, set them now. We need to get the IP address's ID
