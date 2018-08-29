@@ -1,5 +1,5 @@
 build:
-	go build
+	go build -o terraform-provider-phpipam_${TRAVIS_TAG}
 
 test:
 	go test -v $(shell go list ./... | grep -v /vendor/) 
