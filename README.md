@@ -16,7 +16,7 @@ Terraform, allowing for the management and lookup of sections, VLANs, subnets,
 and IP addresses, entirely within Terraform.
 
 [3]: https://phpipam.net/api/api_documentation/
-[4]: https://github.com/paybyphone/phpipam-sdk-go
+[4]: https://github.com/Ouest-France/phpipam-sdk-go
 
 ## Installing
 
@@ -25,7 +25,7 @@ into your config. Check the [releases page][6] of this repo to get releases for
 Linux, OS X, and Windows.
 
 [5]: https://www.terraform.io/docs/plugins/basics.html
-[6]: https://github.com/paybyphone/terraform-provider-phpipam/releases
+[6]: https://github.com/Ouest-France/terraform-provider-phpipam/releases
 
 ## Usage
 

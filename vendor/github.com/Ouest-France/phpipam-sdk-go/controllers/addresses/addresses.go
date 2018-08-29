@@ -3,11 +3,14 @@
 package addresses
 
 import (
+	"errors"
 	"fmt"
+	"math/rand"
+	"time"
 
-	"github.com/paybyphone/phpipam-sdk-go/phpipam"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam/client"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam/session"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam/client"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam/session"
 )
 
 // Address represents an IP address resource within PHPIPAM.
@@ -63,6 +66,13 @@ type Address struct {
 
 	// The date of the last edit to this resource.
 	EditDate string `json:"editDate,omitempty"`
+
+	// A map[string]interface{} of custom fields to set on the resource. Note
+	// that this functionality requires PHPIPAM 1.3 or higher with the "Nest
+	// custom fields" flag set on the specific API integration. If this is not
+	// enabled, this map will be nil on GETs and POSTs and PATCHes with this
+	// field set will fail. Use the explicit custom field functions instead.
+	CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
 }
 
 // Controller is the base client for the Addresses controller.
@@ -80,7 +90,24 @@ func NewController(sess *session.Session) *Controller {
 
 // CreateAddress creates an address by sending a POST request.
 func (c *Controller) CreateAddress(in Address) (message string, err error) {
-	err = c.SendRequest("POST", "/addresses/", &in, &message)
+	if in.IPAddress == "" && in.SubnetID == 0 {
+		return message, errors.New("ip address or subnet id must be defined")
+	}
+
+	if in.IPAddress == "" {
+		// Retry
+		for i := 0; i <= 5; i++ {
+			err = c.SendRequest("POST", "/addresses/first_free", &in, &message)
+			if err == nil {
+				break
+			}
+			r := rand.Intn(500)
+			time.Sleep(time.Duration(r) * time.Microsecond)
+		}
+	} else {
+		err = c.SendRequest("POST", "/addresses/", &in, &message)
+	}
+
 	return
 }
 
