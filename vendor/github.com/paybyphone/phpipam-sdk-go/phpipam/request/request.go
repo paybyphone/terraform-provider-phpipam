@@ -28,6 +28,21 @@ type APIResponse struct {
 	Success bool
 }
 
+type APIResponseInt struct {
+	// The HTTP result code.
+	Code int
+
+	// The response data. This is further unmarshaled into the data type set by
+	// Request.Output.
+	Data json.RawMessage
+
+	// The error message, if the request failed.
+	Message string
+
+	// Whether or not the API request was successful.
+	Success int
+}
+
 // Request represents the API request.
 type Request struct {
 	// The API session.
@@ -76,10 +91,18 @@ func (r *requestResponse) BodyString() string {
 // request is successful and the response data is unmarshalled.
 func (r *requestResponse) ReadResponseJSON(v interface{}) error {
 	var resp APIResponse
+	var respi APIResponseInt
 	if err := json.Unmarshal(r.Body, &resp); err != nil {
-		return fmt.Errorf("JSON parsing error: %s - Response body: %s", err, r.Body)
-	}
+		if err := json.Unmarshal(r.Body, &respi); err != nil {
+			return fmt.Errorf("JSON parsing error: %s - Response body: %s", err, r.Body)
+		} else {
+			if (respi.Success == 0) { resp.Success = true }  else { resp.Success = false }
+			resp.Code = respi.Code
+			resp.Data = respi.Data
+			resp.Message = respi.Message
 
+		}
+	}
 	if !resp.Success {
 		return r.handleError()
 	}
