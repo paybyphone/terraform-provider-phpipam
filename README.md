@@ -403,7 +403,7 @@ The following attributes are exported:
  * `dns_resolver_id` - The ID of the DNS resolver to use in the section.
 
 #### The `phpipam_first_free_subnet` Data Source
-The `phpipam_first_free_subnet` data source get the first available `subnet_address` from given `master_subnet_id` and `subnet_mask`
+The `phpipam_first_free_subnet` data source returns first available subnet within given `master_subnet_id` for specified `subnet_mask`
 
 **Example:**
 ```
@@ -421,7 +421,7 @@ output	subnet_cidr_block {
 
 The data source takes the following parameters:
 * `master_subnet_id` (Required) - The ID of the parent subnet for this subnet
-* `subnet_mask` (Required) - The subnet mask, in bits.
+* `subnet_mask` (Required) - The subnet mask of first available subnet, in bits.
 
 ##### Attribute Reference
 
