@@ -114,6 +114,31 @@ func bareSubnetSchema() map[string]*schema.Schema {
 	}
 }
 
+// resourceSubnetSchema returns the schema for the phpipam_first_free_subnet resource. It
+// sets the required and optional fields, the latter defined in
+// resourceSubnetRequiredFields, and ensures that all optional and
+// non-configurable fields are computed as well.
+func resourceFirstFreeSubnetSchema() map[string]*schema.Schema {
+	schema := bareSubnetSchema()
+	for k, v := range schema {
+		switch {
+		// Subnet Address and Mask are currently ForceNew
+		case k == "master_subnet_id" || k == "subnet_mask" :
+			v.Required = true
+			v.ForceNew = true
+		case k == "custom_fields":
+			v.Optional = true
+		case resourceSubnetOptionalFields.Has(k):
+			v.Optional = true
+			v.Computed = true
+		default:
+			v.Computed = true
+		}
+	}
+	return schema
+}
+
+
 // resourceSubnetSchema returns the schema for the phpipam_subnet resource. It
 // sets the required and optional fields, the latter defined in
 // resourceSubnetRequiredFields, and ensures that all optional and

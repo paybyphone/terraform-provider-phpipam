@@ -402,6 +402,35 @@ The following attributes are exported:
    listing.
  * `dns_resolver_id` - The ID of the DNS resolver to use in the section.
 
+#### The `phpipam_first_free_subnet` Data Source
+The `phpipam_first_free_subnet` data source returns first available subnet within given `master_subnet_id` for specified `subnet_mask`
+
+**Example:**
+```
+data "phpipam_first_free_subnet"  "subnet" {
+  master_subnet_id = "9"
+  subnet_mask    = "26"
+}
+
+output	subnet_cidr_block {
+	value = "${data.phpipam_first_free_subnet.subnet.subnet_address}"
+}
+```
+
+##### Argument Reference
+
+The data source takes the following parameters:
+* `master_subnet_id` (Required) - The ID of the parent subnet for this subnet
+* `subnet_mask` (Required) - The subnet mask of first available subnet, in bits.
+
+##### Attribute Reference
+
+The following attributes are exported:
+
+ * `subnet_address` -  The network address of the subnet
+   subnet.
+
+
 #### The `phpipam_subnet` Data Source
 
 The `phpipam_subnet` data source gets information on a subnet such as its ID
@@ -424,6 +453,7 @@ resource "phpipam_address" {
   description = "Managed by Terraform"
 }
 ```
+
 
 **Example with `description_match`:**
 
@@ -822,6 +852,44 @@ The following attributes are exported:
 
  * `section_id` - The ID of the section in the PHPIPAM database.
  * `edit_date` - The date this resource was last edited.
+
+#### The `phpipam_first_free_subnet` Resource
+The `phpipam_first_free_subnet` resouce can be used to checkout and manage a subnet in PHPIPAM. It is same as creating subnet using `phpipam_subnet` resource, with an option to checkout first free subnet from given `master_subnet_id` and `subnet_mask`
+
+Example:
+```
+resource "phpipam_first_free_subnet"  "subnet" {
+  master_subnet_id = 9
+  subnet_mask    = 24
+  custom_fields = {
+    CustomTestSubnets = "terraform-test"
+  }
+
+}
+
+```
+##### Argument Reference
+
+The resouce takes following parameters:
+* `master_subnet_id` (Required) - The ID of the parent subnet for this subnet
+* `subnet_mask` (Required) - The subnet mask, in bits.
+
+⚠️  **NOTE on custom fields:** PHPIPAM installations with custom fields must have
+all fields set to optional when using this plugin. For more info see
+[here](https://github.com/phpipam/phpipam/issues/1073). Further to this, either
+ensure that your fields also do not have default values, or ensure the default
+is set in your TF configuration. Diff loops may happen otherwise!
+
+##### Attribute Reference
+
+The following attributes are exported:
+
+ * `subnet_id` - The ID of the subnet in the PHPIPAM database.
+ * `subnet_address` -  The network address of the subnet
+ * `permissions` - A JSON representation of the permissions associated with this
+   subnet.
+ * `edit_date` - The date this resource was last updated.
+
 
 #### The `phpipam_subnet` Resource
 
