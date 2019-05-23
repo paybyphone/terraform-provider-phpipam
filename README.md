@@ -16,7 +16,7 @@ Terraform, allowing for the management and lookup of sections, VLANs, subnets,
 and IP addresses, entirely within Terraform.
 
 [3]: https://phpipam.net/api/api_documentation/
-[4]: https://github.com/paybyphone/phpipam-sdk-go
+[4]: https://github.com/Ouest-France/phpipam-sdk-go
 
 ## Installing
 
@@ -25,7 +25,7 @@ into your config. Check the [releases page][6] of this repo to get releases for
 Linux, OS X, and Windows.
 
 [5]: https://www.terraform.io/docs/plugins/basics.html
-[6]: https://github.com/paybyphone/terraform-provider-phpipam/releases
+[6]: https://github.com/Ouest-France/terraform-provider-phpipam/releases
 
 ## Usage
 
@@ -707,28 +707,15 @@ data "phpipam_subnet" "subnet" {
   subnet_mask    = 24
 }
 
-// Get the first available address
-data "phpipam_first_free_address" "next_address" {
-  subnet_id = "${data.phpipam_subnet.subnet.subnet_id}"
-}
-
 // Reserve the address. Note that we use ignore_changes here to ensure that we
 // don't end up re-allocating this address on future Terraform runs.
 resource "phpipam_address" {
   subnet_id   = "${data.phpipam_subnet.subnet.subnet_id}"
-  ip_address  = "${data.phpipam_first_free_address.next_address.ip_address}"
   hostname    = "tf-test-host.example.internal"
   description = "Managed by Terraform"
 
   custom_fields = {
     CustomTestAddresses = "terraform-test"
-  }
-
-  lifecycle {
-    ignore_changes = [
-      "subnet_id",
-      "ip_address",
-    ]
   }
 }
 ```
@@ -739,7 +726,7 @@ The resource takes the following parameters:
 
  * `subnet_id` (Required) - The database ID of the subnet this IP address
    belongs to.
- * `ip_address` (Required) - The IP address to reserve.
+ * `ip_address` (Optional) - The IP address to reserve. If not defined, first free IP in subnet is used.
  * `is_gateway` (Optional) - `true` if this IP address has been designated as a
    gateway.
  * `description` (Optional) - The description provided to this IP address.

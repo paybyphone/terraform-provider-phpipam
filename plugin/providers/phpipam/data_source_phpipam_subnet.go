@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/subnets"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/subnets"
 )
 
 func dataSourcePHPIPAMSubnet() *schema.Resource {

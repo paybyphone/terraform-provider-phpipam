@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/addresses"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/addresses"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
 )
 
 // resourceAddressOptionalFields represents all the fields that are optional in
@@ -101,7 +101,11 @@ func resourceAddressSchema() map[string]*schema.Schema {
 	for k, v := range s {
 		switch {
 		// IP Address and Subnet ID are ForceNew
-		case k == "subnet_id" || k == "ip_address":
+		case k == "ip_address":
+			v.ForceNew = true
+			v.Optional = true
+			v.Computed = true
+		case k == "subnet_id":
 			v.Required = true
 			v.ForceNew = true
 		case k == "custom_fields":
