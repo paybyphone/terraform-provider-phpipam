@@ -3,8 +3,8 @@ package phpipam
 import (
 	"errors"
 
-	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/sections"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func dataSourcePHPIPAMSection() *schema.Resource {
@@ -34,6 +34,7 @@ func dataSourcePHPIPAMSectionRead(d *schema.ResourceData, meta interface{}) erro
 	default:
 		return errors.New("section_id or name not defined, cannot proceed with reading data")
 	}
-	flattenSection(out, d)
-	return nil
+	err = flattenSection(out, d)
+
+	return err
 }

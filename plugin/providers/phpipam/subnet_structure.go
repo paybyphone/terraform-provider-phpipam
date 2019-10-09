@@ -5,9 +5,9 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/subnets"
 	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 // resourceSubnetOptionalFields represents all the fields that are optional in
@@ -182,16 +182,6 @@ func dataSourceSubnetSchema() map[string]*schema.Schema {
 	return s
 }
 
-// dataSourceSubnetsSchema returns the sub-schema for the phpipam_subnets data
-// source. All this function does is set all fields as computed.
-func dataSourceSubnetsSchema() map[string]*schema.Schema {
-	schema := bareSubnetSchema()
-	for _, v := range schema {
-		v.Computed = true
-	}
-	return schema
-}
-
 // expandSubnet returns the subnets.Subnet structure for a
 // phpiapm_subnet resource or data source. Depending on if we are dealing with
 // the resource or data source, extra considerations may need to be taken.
@@ -226,31 +216,43 @@ func expandSubnet(d *schema.ResourceData) subnets.Subnet {
 
 // flattenSubnet sets fields in a *schema.ResourceData with fields supplied by
 // the input subnets.Subnet. This is used in read operations.
-func flattenSubnet(s subnets.Subnet, d *schema.ResourceData) {
+func flattenSubnet(s subnets.Subnet, d *schema.ResourceData) error {
 	d.SetId(strconv.Itoa(s.ID))
-	d.Set("subnet_id", s.ID)
-	d.Set("subnet_address", s.SubnetAddress)
-	d.Set("subnet_mask", s.Mask)
-	d.Set("description", s.Description)
-	d.Set("section_id", s.SectionID)
-	d.Set("linked_subnet_id", s.LinkedSubnet)
-	d.Set("vlan_id", s.VLANID)
-	d.Set("vrf_id", s.VRFID)
-	d.Set("master_subnet_id", s.MasterSubnetID)
-	d.Set("nameserver_id", s.NameserverID)
-	d.Set("show_name", s.ShowName)
-	d.Set("permissions", s.Permissions)
-	d.Set("create_ptr_records", s.DNSRecursive)
-	d.Set("display_hostnames", s.DNSRecords)
-	d.Set("allow_ip_requests", s.AllowRequests)
-	d.Set("scan_agent_id", s.ScanAgent)
-	d.Set("include_in_ping", s.PingSubnet)
-	d.Set("host_discovery_enabled", s.DiscoverSubnet)
-	d.Set("is_folder", s.IsFolder)
-	d.Set("is_full", s.IsFull)
-	d.Set("utilization_threshold", s.Threshold)
-	d.Set("location_id", s.Location)
-	d.Set("edit_date", s.EditDate)
+
+	fields := map[string]interface{}{
+		"subnet_id":              s.ID,
+		"subnet_address":         s.SubnetAddress,
+		"subnet_mask":            s.Mask,
+		"description":            s.Description,
+		"section_id":             s.SectionID,
+		"linked_subnet_id":       s.LinkedSubnet,
+		"vlan_id":                s.VLANID,
+		"vrf_id":                 s.VRFID,
+		"master_subnet_id":       s.MasterSubnetID,
+		"nameserver_id":          s.NameserverID,
+		"show_name":              s.ShowName,
+		"permissions":            s.Permissions,
+		"create_ptr_records":     s.DNSRecursive,
+		"display_hostnames":      s.DNSRecords,
+		"allow_ip_requests":      s.AllowRequests,
+		"scan_agent_id":          s.ScanAgent,
+		"include_in_ping":        s.PingSubnet,
+		"host_discovery_enabled": s.DiscoverSubnet,
+		"is_folder":              s.IsFolder,
+		"is_full":                s.IsFull,
+		"utilization_threshold":  s.Threshold,
+		"location_id":            s.Location,
+		"edit_date":              s.EditDate,
+	}
+
+	for field, value := range fields {
+		err := d.Set(field, value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // subnetDescriptionMatchSchema returns a *schema.Schema for description

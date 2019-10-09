@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 // resourcePHPIPAMAddress returns the resource structure for the phpipam_address
@@ -37,7 +37,10 @@ func resourcePHPIPAMAddressCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	if in.IPAddress == "" {
-		d.Set("ip_address", ip)
+		err = d.Set("ip_address", ip)
+		if err != nil {
+			return err
+		}
 	}
 
 	// If we have custom fields, set them now. We need to get the IP address's ID

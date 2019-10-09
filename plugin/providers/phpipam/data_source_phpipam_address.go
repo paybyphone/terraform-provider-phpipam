@@ -3,8 +3,8 @@ package phpipam
 import (
 	"errors"
 
-	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/addresses"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func dataSourcePHPIPAMAddress() *schema.Resource {
@@ -42,7 +42,10 @@ func dataSourcePHPIPAMAddressRead(d *schema.ResourceData, meta interface{}) erro
 	if len(out) != 1 {
 		return errors.New("Your search returned zero or multiple results. Please correct your search and try again")
 	}
-	flattenAddress(out[0], d)
+	err = flattenAddress(out[0], d)
+	if err != nil {
+		return err
+	}
 	fields, err := c.GetAddressCustomFields(out[0].ID)
 	if err != nil {
 		return err
