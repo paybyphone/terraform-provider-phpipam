@@ -33,7 +33,7 @@ func dataSourcePHPIPAMFirstFreeAddressRead(d *schema.ResourceData, meta interfac
 	}
 
 	d.SetId(out)
-	d.Set("ip_address", out)
+	err = d.Set("ip_address", out)
 
-	return nil
+	return err
 }

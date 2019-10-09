@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/subnets"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func dataSourcePHPIPAMSubnet() *schema.Resource {
@@ -43,7 +43,10 @@ func dataSourcePHPIPAMSubnetRead(d *schema.ResourceData, meta interface{}) error
 	if len(out) != 1 {
 		return errors.New("Your search returned zero or multiple results. Please correct your search and try again")
 	}
-	flattenSubnet(out[0], d)
+	err = flattenSubnet(out[0], d)
+	if err != nil {
+		return err
+	}
 	fields, err := c.GetSubnetCustomFields(out[0].ID)
 	if err != nil {
 		return err
