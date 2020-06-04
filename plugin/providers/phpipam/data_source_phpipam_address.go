@@ -2,6 +2,7 @@ package phpipam
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/addresses"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -24,6 +25,11 @@ func dataSourcePHPIPAMAddressRead(d *schema.ResourceData, meta interface{}) erro
 	case d.Get("address_id").(int) != 0:
 		out[0], err = c.GetAddressByID(d.Get("address_id").(int))
 		if err != nil {
+			if strings.Contains(err.Error(), "\"code\":404") {
+				// IP not found by id
+				d.SetId("")
+				return nil
+			}
 			return err
 		}
 	case d.Get("ip_address").(string) != "":
