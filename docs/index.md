@@ -33,3 +33,5 @@ provider "phpipam" {
 * `user` - (Optional) The user name to access the PHPIPAM API with. Can also be supplied via the PHPIPAM_USER_NAME variable.
 
 * `password` - (Optional) The password to access the PHPIPAM API with. Can also be supplied via PHPIPAM_PASSWORD to prevent plain text password storage in config.
+
+* `insecure` - (Optional) If true, disable SSL cert verification. Defaults to false.
