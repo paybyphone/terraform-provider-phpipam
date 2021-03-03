@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/vlans"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePHPIPAMVLAN() *schema.Resource {

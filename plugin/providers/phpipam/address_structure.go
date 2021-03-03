@@ -6,7 +6,7 @@ import (
 
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/addresses"
 	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // resourceAddressOptionalFields represents all the fields that are optional in
