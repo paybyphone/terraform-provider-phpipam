@@ -8,7 +8,7 @@ import (
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/addresses"
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/subnets"
 	"github.com/Ouest-France/phpipam-sdk-go/controllers/vlans"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 // customFieldFilterSchema returns a *schema.Schema for the custom_field_filter
