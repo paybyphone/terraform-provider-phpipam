@@ -3,7 +3,7 @@ package phpipam
 import (
 	"errors"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePHPIPAMFirstFreeAddress() *schema.Resource {
@@ -33,7 +33,7 @@ func dataSourcePHPIPAMFirstFreeAddressRead(d *schema.ResourceData, meta interfac
 	}
 
 	d.SetId(out)
-	d.Set("ip_address", out)
+	err = d.Set("ip_address", out)
 
-	return nil
+	return err
 }

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/addresses"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/addresses"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // resourceAddressOptionalFields represents all the fields that are optional in
@@ -101,7 +101,11 @@ func resourceAddressSchema() map[string]*schema.Schema {
 	for k, v := range s {
 		switch {
 		// IP Address and Subnet ID are ForceNew
-		case k == "subnet_id" || k == "ip_address":
+		case k == "ip_address":
+			v.ForceNew = true
+			v.Optional = true
+			v.Computed = true
+		case k == "subnet_id":
 			v.Required = true
 			v.ForceNew = true
 		case k == "custom_fields":
@@ -192,25 +196,37 @@ func expandAddress(d *schema.ResourceData) addresses.Address {
 
 // flattenAddress sets fields in a *schema.ResourceData with fields supplied by
 // the input addresses.Address. This is used in read operations.
-func flattenAddress(a addresses.Address, d *schema.ResourceData) {
+func flattenAddress(a addresses.Address, d *schema.ResourceData) error {
 	d.SetId(strconv.Itoa(a.ID))
-	d.Set("address_id", a.ID)
-	d.Set("subnet_id", a.SubnetID)
-	d.Set("ip_address", a.IPAddress)
-	d.Set("is_gateway", a.IsGateway)
-	d.Set("description", a.Description)
-	d.Set("hostname", a.Hostname)
-	d.Set("mac_address", a.MACAddress)
-	d.Set("owner", a.Owner)
-	d.Set("state_tag_id", a.Tag)
-	d.Set("skip_ptr_record", a.PTRIgnore)
-	d.Set("ptr_record_id", a.PTRRecordID)
-	d.Set("device_id", a.DeviceID)
-	d.Set("switch_port_label", a.Port)
-	d.Set("note", a.Note)
-	d.Set("last_seen", a.LastSeen)
-	d.Set("exclude_ping", a.ExcludePing)
-	d.Set("edit_date", a.EditDate)
+
+	fields := map[string]interface{}{
+		"address_id":        a.ID,
+		"subnet_id":         a.SubnetID,
+		"ip_address":        a.IPAddress,
+		"is_gateway":        a.IsGateway,
+		"description":       a.Description,
+		"hostname":          a.Hostname,
+		"mac_address":       a.MACAddress,
+		"owner":             a.Owner,
+		"state_tag_id":      a.Tag,
+		"skip_ptr_record":   a.PTRIgnore,
+		"ptr_record_id":     a.PTRRecordID,
+		"device_id":         a.DeviceID,
+		"switch_port_label": a.Port,
+		"note":              a.Note,
+		"last_seen":         a.LastSeen,
+		"exclude_ping":      a.ExcludePing,
+		"edit_date":         a.EditDate,
+	}
+
+	for field, value := range fields {
+		err := d.Set(field, value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // addressSearchInSubnet provides the address search functionality for both the

@@ -3,9 +3,9 @@ package phpipam
 import (
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/sections"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/sections"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // resourceSectionOptionalFields represents all the fields that are optional in
@@ -142,19 +142,31 @@ func expandSection(d *schema.ResourceData) sections.Section {
 
 // flattenSection sets fields in a *schema.ResourceData with fields supplied by
 // the input sections.Section. This is used in read operations.
-func flattenSection(s sections.Section, d *schema.ResourceData) {
+func flattenSection(s sections.Section, d *schema.ResourceData) error {
 	d.SetId(strconv.Itoa(s.ID))
-	d.Set("section_id", s.ID)
-	d.Set("name", s.Name)
-	d.Set("description", s.Description)
-	d.Set("master_section_id", s.MasterSection)
-	d.Set("permissions", s.Permissions)
-	d.Set("strict_mode", s.StrictMode)
-	d.Set("subnet_ordering", s.SubnetOrdering)
-	d.Set("display_order", s.Order)
-	d.Set("edit_date", s.EditDate)
-	d.Set("show_vlan_in_subnet_listing", s.ShowVLAN)
-	d.Set("show_vrf_in_subnet_listing", s.ShowVRF)
-	d.Set("show_supernet_only", s.ShowSupernetOnly)
-	d.Set("dns_resolver_id", s.DNS)
+
+	fields := map[string]interface{}{
+		"section_id":                  s.ID,
+		"name":                        s.Name,
+		"description":                 s.Description,
+		"master_section_id":           s.MasterSection,
+		"permissions":                 s.Permissions,
+		"strict_mode":                 s.StrictMode,
+		"subnet_ordering":             s.SubnetOrdering,
+		"display_order":               s.Order,
+		"edit_date":                   s.EditDate,
+		"show_vlan_in_subnet_listing": s.ShowVLAN,
+		"show_vrf_in_subnet_listing":  s.ShowVRF,
+		"show_supernet_only":          s.ShowSupernetOnly,
+		"dns_resolver_id":             s.DNS,
+	}
+
+	for field, value := range fields {
+		err := d.Set(field, value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

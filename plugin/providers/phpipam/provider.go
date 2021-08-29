@@ -1,12 +1,11 @@
 package phpipam
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Provider returns a terraform.ResourceProvider.
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"app_id": &schema.Schema{
@@ -32,6 +31,12 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				Default:     "",
 				Description: descriptions["username"],
+			},
+			"insecure": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: descriptions["insecure"],
 			},
 		},
 
@@ -64,6 +69,7 @@ func init() {
 		"endpoint": "The full URL (plus path) to the API endpoint",
 		"password": "The password of the PHPIPAM account",
 		"username": "The username of the PHPIPAM account",
+		"insecure": "Whether server should be accessed without verifying the TLS certificate.",
 	}
 }
 
@@ -73,6 +79,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		Endpoint: d.Get("endpoint").(string),
 		Password: d.Get("password").(string),
 		Username: d.Get("username").(string),
+		Insecure: d.Get("insecure").(bool),
 	}
 	return config.Client()
 }

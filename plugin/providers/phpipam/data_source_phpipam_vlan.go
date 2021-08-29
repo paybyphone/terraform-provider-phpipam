@@ -3,8 +3,8 @@ package phpipam
 import (
 	"errors"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/vlans"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/vlans"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func dataSourcePHPIPAMVLAN() *schema.Resource {
@@ -39,6 +39,6 @@ func dataSourcePHPIPAMVLANRead(d *schema.ResourceData, meta interface{}) error {
 	default:
 		return errors.New("vlan_id or number not defined, cannot proceed with reading data")
 	}
-	flattenVLAN(out, d)
-	return nil
+	err := flattenVLAN(out, d)
+	return err
 }

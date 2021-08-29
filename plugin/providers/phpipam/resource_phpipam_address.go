@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // resourcePHPIPAMAddress returns the resource structure for the phpipam_address
@@ -31,8 +31,16 @@ func resourcePHPIPAMAddressCreate(d *schema.ResourceData, meta interface{}) erro
 	// Assert the ID field here is empty. If this is not empty the request will fail.
 	in.ID = 0
 
-	if _, err := c.CreateAddress(in); err != nil {
+	ip, err := c.CreateAddress(in)
+	if err != nil {
 		return err
+	}
+
+	if in.IPAddress == "" {
+		err = d.Set("ip_address", ip)
+		if err != nil {
+			return err
+		}
 	}
 
 	// If we have custom fields, set them now. We need to get the IP address's ID

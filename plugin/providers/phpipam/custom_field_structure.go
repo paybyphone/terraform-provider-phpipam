@@ -5,10 +5,10 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/addresses"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/subnets"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/vlans"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/addresses"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/subnets"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/vlans"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // customFieldFilterSchema returns a *schema.Schema for the custom_field_filter
@@ -43,7 +43,7 @@ func customFieldFilterSchema(conflicts []string) *schema.Schema {
 // this function will be updated.
 func customFieldFilter(data, search map[string]interface{}) (bool, error) {
 	// zero-length or nil map is a panic. This should never happen
-	if search == nil || len(search) == 0 {
+	if len(search) == 0 {
 		panic("Zero length or nil map passed as search terms to customFieldFilter")
 	}
 

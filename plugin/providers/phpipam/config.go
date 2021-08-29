@@ -3,12 +3,12 @@ package phpipam
 import (
 	"log"
 
-	"github.com/paybyphone/phpipam-sdk-go/controllers/addresses"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/sections"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/subnets"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/vlans"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam"
-	"github.com/paybyphone/phpipam-sdk-go/phpipam/session"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/addresses"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/sections"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/subnets"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/vlans"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam"
+	"github.com/Ouest-France/phpipam-sdk-go/phpipam/session"
 )
 
 // Config provides the configuration for the PHPIPAM provider.
@@ -29,6 +29,9 @@ type Config struct {
 	// The user name for the PHPIPAM account. This can also be supplied via the
 	// PHPIPAM_USER_NAME environment variable.
 	Username string
+
+	// Allow connect to HTTPS without SSL issuer validation
+	Insecure bool
 }
 
 // ProviderPHPIPAMClient is a structure that contains the client connections
@@ -55,6 +58,7 @@ func (c *Config) Client() (interface{}, error) {
 		Endpoint: c.Endpoint,
 		Password: c.Password,
 		Username: c.Username,
+		Insecure: c.Insecure,
 	}
 	log.Printf("[DEBUG] Initializing PHPIPAM controllers")
 	sess := session.NewSession(cfg)

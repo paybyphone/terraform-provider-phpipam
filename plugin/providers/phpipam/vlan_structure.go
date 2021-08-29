@@ -3,8 +3,8 @@ package phpipam
 import (
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/paybyphone/phpipam-sdk-go/controllers/vlans"
+	"github.com/Ouest-France/phpipam-sdk-go/controllers/vlans"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // resourceVLANOptionalFields represents all the fields that are optional in
@@ -110,12 +110,24 @@ func expandVLAN(d *schema.ResourceData) vlans.VLAN {
 
 // flattenVLAN sets fields in a *schema.ResourceData with fields supplied by
 // the input vlans.VLAN. This is used in read operations.
-func flattenVLAN(v vlans.VLAN, d *schema.ResourceData) {
+func flattenVLAN(v vlans.VLAN, d *schema.ResourceData) error {
 	d.SetId(strconv.Itoa(v.ID))
-	d.Set("vlan_id", v.ID)
-	d.Set("l2_domain_id", v.DomainID)
-	d.Set("name", v.Name)
-	d.Set("number", v.Number)
-	d.Set("description", v.Description)
-	d.Set("edit_date", v.EditDate)
+
+	fields := map[string]interface{}{
+		"vlan_id":      v.ID,
+		"l2_domain_id": v.DomainID,
+		"name":         v.Name,
+		"number":       v.Number,
+		"description":  v.Description,
+		"edit_date":    v.EditDate,
+	}
+
+	for field, value := range fields {
+		err := d.Set(field, value)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
